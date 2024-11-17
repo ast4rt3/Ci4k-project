@@ -5,10 +5,11 @@ const reconnectBtn = document.getElementById('reconnectBtn');
 
 // Function to establish a WebSocket connection
 function connectToServer() {
+    console.log('Attempting to connect to WebSocket server...');
     // Update status message
     statusDiv.innerText = 'Connecting to signaling server...';
 
-    socket = new WebSocket('ws://localhost:8080'); // Assuming the signaling server is running on localhost:8080
+    socket = new WebSocket('ws://localhost:8080'); // Ensure the server is running on this port
 
     socket.addEventListener('open', () => {
         console.log('WebSocket connection established');
@@ -17,6 +18,7 @@ function connectToServer() {
 
     socket.addEventListener('message', (event) => {
         const message = JSON.parse(event.data);
+        console.log('Received message:', message);
         // Display the received message in the message log
         messageLogDiv.innerHTML += `<p>Received: ${JSON.stringify(message)}</p>`;
     });
@@ -34,6 +36,7 @@ function connectToServer() {
 
 // Function to reconnect to the WebSocket server
 function reconnect() {
+    console.log('Reconnect button clicked');
     if (socket && socket.readyState === WebSocket.OPEN) {
         console.log('Already connected, no need to reconnect');
         statusDiv.innerText = 'Already connected to server';
@@ -42,6 +45,7 @@ function reconnect() {
 
     // Close the existing socket if it's open
     if (socket && socket.readyState === WebSocket.OPEN) {
+        console.log('Closing existing WebSocket connection...');
         socket.close();
     }
 
