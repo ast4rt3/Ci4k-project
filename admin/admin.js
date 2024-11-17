@@ -32,7 +32,7 @@ function setupWebSocket() {
         console.log('Message received on admin:', event.data);
         const data = JSON.parse(event.data);
 
-        // Forward the message to the renderer
+        // Forward the message to the renderer process
         if (mainWindow && mainWindow.webContents) {
             mainWindow.webContents.send('client-data', data);
         }

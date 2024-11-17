@@ -13,7 +13,7 @@
         window.electronAPI.onClientData((data) => {
             console.log('Data received on admin UI:', data);
 
-            // Update clientData with the received data
+            // Update the DOM with the received data
             const clientDataDiv = document.getElementById('clientData');
             clientDataDiv.innerHTML = `
                 <p>Client Username: ${data.username || 'Unknown'}</p>
