@@ -9,7 +9,7 @@ function connectToServer() {
     // Update status message
     statusDiv.innerText = 'Connecting to signaling server...';
 
-    socket = new WebSocket('ws://localhost:8080'); // Ensure the server is running on this port
+    socket = new WebSocket('ws://192.168.1.69:8080'); // Ensure the server is running on this port
 
     socket.addEventListener('open', () => {
         console.log('WebSocket connection established');
