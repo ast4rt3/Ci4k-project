@@ -19,7 +19,7 @@ function createWindow() {
 }
 
 // WebSocket setup
-const socket = new WebSocket('ws://192.168.1.69:8080'); // Replace with your server's IP
+const socket = new WebSocket('ws://192.168.1.69:8080'); // Replace with your signaling server IP
 
 // When WebSocket connection is opened
 socket.onopen = function() {
@@ -29,11 +29,11 @@ socket.onopen = function() {
 // When the server sends a message
 socket.onmessage = function(event) {
     console.log('Received message:', event.data);
-    const receivedData = JSON.parse(event.data); // If data is JSON
+    const receivedData = JSON.parse(event.data);  // If data is JSON
 
-    // If the data contains a username, send it to the renderer process
+    // If the message contains the client username, send it to the renderer process
     if (receivedData.type === 'client-info') {
-        mainWindow.webContents.send('client-data', receivedData.username);
+        mainWindow.webContents.send('client-data', receivedData.username);  // Send username to the renderer
     }
 };
 
