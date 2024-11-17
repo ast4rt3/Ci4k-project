@@ -1,43 +1,37 @@
-const socket = new WebSocket('ws://localhost:8080');
-const peerConnection = new RTCPeerConnection();
+const WebSocket = require('ws');
 
-socket.onopen = () => {
-  console.log("Connected to signaling server.");
-  createOffer();
+// Create a WebSocket connection to the signaling server
+const socket = new WebSocket('ws://<SIGNALING_SERVER_IP>:8080');
+
+// When the connection is established
+socket.onopen = function() {
+    console.log('Connected to signaling server');
+    // Send a message to the server when connected (you can replace this with actual client data)
+    socket.send(JSON.stringify({
+        type: 'client-hello',
+        message: 'Client has connected!',
+        timestamp: new Date().toISOString(),
+    }));
 };
 
-peerConnection.onicecandidate = (event) => {
-  if (event.candidate) {
-    socket.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
-  }
+// When the client receives a message from the signaling server
+socket.onmessage = function(event) {
+    const receivedData = JSON.parse(event.data);
+    console.log('Received data from server:', receivedData);
+
+    // Handle different types of messages (if necessary)
+    if (receivedData.type === 'server-message') {
+        // Update client interface with received message (could be displayed in UI)
+        console.log('Server says:', receivedData.message);
+    }
 };
 
-peerConnection.ontrack = (event) => {
-  const remoteStream = event.streams[0];
-  // Handle incoming stream (e.g., display in a video element)
+// Handle any errors with the WebSocket connection
+socket.onerror = function(error) {
+    console.log('WebSocket error:', error);
 };
 
-const createOffer = async () => {
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-  socket.send(JSON.stringify({ type: 'offer', offer }));
-};
-
-socket.onmessage = async (event) => {
-  const message = JSON.parse(event.data);
-
-  if (message.type === 'offer') {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer));
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-    socket.send(JSON.stringify({ type: 'answer', answer }));
-  }
-
-  if (message.type === 'answer') {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(message.answer));
-  }
-
-  if (message.type === 'candidate') {
-    await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
-  }
+// When the client disconnects
+socket.onclose = function() {
+    console.log('Disconnected from signaling server');
 };

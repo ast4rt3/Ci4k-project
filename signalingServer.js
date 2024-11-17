@@ -1,25 +1,24 @@
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 
-let clients = [];
+wss.on('connection', function(socket) {
+    console.log('A new client has connected!');
 
-wss.on('connection', (ws) => {
-  // Add the new client connection
-  clients.push(ws);
-
-  // When a message is received, forward it to the other client
-  ws.on('message', (message) => {
-    clients.forEach((client) => {
-      if (client !== ws) {
-        client.send(message);
-      }
+    // Send a message to all connected clients (broadcast)
+    wss.clients.forEach(function(client) {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send('A new client has connected!');
+        }
     });
-  });
 
-  ws.on('close', () => {
-    // Remove disconnected client
-    clients = clients.filter((client) => client !== ws);
-  });
+    socket.on('message', function(message) {
+        console.log('Received message:', message);
+        // Optionally forward the message to all clients or the admin
+    });
+
+    socket.on('close', function() {
+        console.log('A client has disconnected');
+    });
 });
 
 console.log('Signaling server is running on ws://localhost:8080');

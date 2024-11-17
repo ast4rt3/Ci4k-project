@@ -1,36 +1,63 @@
-const socket = new WebSocket('ws://localhost:8080');
-const peerConnection = new RTCPeerConnection();
+const { app, BrowserWindow, dialog } = require('electron');
+const WebSocket = require('ws');
 
-socket.onopen = () => {
-  console.log("Connected to signaling server.");
+// Create the Electron window
+let mainWindow;
+
+function createWindow() {
+    mainWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+            nodeIntegration: true,
+            preload: path.join(__dirname, 'preload.js'),
+        }
+    });
+
+    mainWindow.loadFile('index.html');
+}
+
+// WebSocket setup
+const socket = new WebSocket('ws://<SIGNALING_SERVER_IP>:8080');
+
+// When WebSocket connection is opened
+socket.onopen = function() {
+    console.log('Connected to signaling server');
 };
 
-peerConnection.onicecandidate = (event) => {
-  if (event.candidate) {
-    socket.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
-  }
+// When the server sends a message
+socket.onmessage = function(event) {
+    console.log('Received message:', event.data);
+    const receivedData = JSON.parse(event.data);  // If data is JSON
+    mainWindow.webContents.send('client-data', receivedData);  // Send data to renderer process
 };
 
-peerConnection.ontrack = (event) => {
-  const remoteStream = event.streams[0];
-  // Handle incoming stream (e.g., display in a video element)
+// When a new client connects
+socket.on('connection', function() {
+    console.log('A new client has connected!');
+    // Show popup notification in the Electron UI when a client connects
+    dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'New Client Connected',
+        message: 'A new client has successfully connected to the server.',
+    });
+});
+
+// Handle errors
+socket.onerror = function(error) {
+    console.log('WebSocket Error:', error);
 };
 
-socket.onmessage = async (event) => {
-  const message = JSON.parse(event.data);
-
-  if (message.type === 'offer') {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer));
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-    socket.send(JSON.stringify({ type: 'answer', answer }));
-  }
-
-  if (message.type === 'answer') {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(message.answer));
-  }
-
-  if (message.type === 'candidate') {
-    await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
-  }
+// Handle WebSocket closure
+socket.onclose = function() {
+    console.log('Disconnected from signaling server');
 };
+
+// Run the app
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
+});
