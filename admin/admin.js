@@ -32,9 +32,9 @@ function setupWebSocket() {
         console.log('Message received on admin:', event.data);
         const data = JSON.parse(event.data);
 
-        // Forward the message to the renderer process
+        // Send the data to renderer process (admin UI)
         if (mainWindow && mainWindow.webContents) {
-            mainWindow.webContents.send('client-data', data);
+            mainWindow.webContents.send('client-data', data); // Pass data to renderer
         }
     };
 

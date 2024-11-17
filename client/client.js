@@ -31,7 +31,7 @@ notifyAdminBtn.addEventListener('click', () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
         const message = {
             type: 'client-action',
-            username: 'ClientUsername',
+            username: 'Ivam',
             message: 'Hello to Admin!',
         };
         socket.send(JSON.stringify(message)); // Send to signaling server
