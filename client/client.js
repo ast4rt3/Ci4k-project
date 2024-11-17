@@ -1,5 +1,4 @@
 const statusDiv = document.getElementById('status');
-const messageLogDiv = document.getElementById('messageLog');
 const notifyAdminBtn = document.getElementById('notifyAdminBtn');
 let socket;
 
@@ -11,17 +10,10 @@ function connectToServer() {
     socket.addEventListener('open', () => {
         console.log('Client connected to signaling server');
         statusDiv.innerText = 'Connected to signaling server';
-
-        // Send initial client info
-        socket.send(JSON.stringify({
-            type: 'client-info',
-            username: 'ClientUsername',
-        }));
     });
 
     socket.addEventListener('message', (event) => {
-        console.log('Message received on client:', event.data);
-        messageLogDiv.innerHTML += `<p>${event.data}</p>`;
+        console.log('Message received on client (broadcast):', event.data);
     });
 
     socket.addEventListener('close', () => {
@@ -42,7 +34,7 @@ notifyAdminBtn.addEventListener('click', () => {
             username: 'ClientUsername',
             message: 'Hello to Admin!',
         };
-        socket.send(JSON.stringify(message));
+        socket.send(JSON.stringify(message)); // Send to signaling server
     } else {
         console.error('Cannot notify admin, WebSocket not open');
     }
