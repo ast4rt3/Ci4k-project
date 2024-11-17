@@ -1,7 +1,7 @@
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const WebSocket = require('ws');
+const path = require('path');
 
-// Create the Electron window
 let mainWindow;
 
 function createWindow() {
@@ -9,51 +9,46 @@ function createWindow() {
         width: 800,
         height: 600,
         webPreferences: {
-            nodeIntegration: true,
-            preload: path.join(__dirname, 'preload.js'),
-        }
+            nodeIntegration: false,
+            contextIsolation: true,
+            preload: path.join(__dirname, 'preload.js'), // Use preload for secure communication
+        },
     });
 
-    mainWindow.loadFile('index.html');
+    mainWindow.loadFile('admin/index.html');
 }
 
 // WebSocket setup
 const socket = new WebSocket('ws://192.168.1.69:8080');
 
-// When WebSocket connection is opened
-socket.onopen = function() {
+socket.onopen = () => {
     console.log('Connected to signaling server');
 };
 
-// When the server sends a message
-socket.onmessage = function(event) {
+socket.onmessage = (event) => {
     console.log('Received message:', event.data);
-    const receivedData = JSON.parse(event.data);  // If data is JSON
-    mainWindow.webContents.send('client-data', receivedData);  // Send data to renderer process
+    const receivedData = JSON.parse(event.data);
+    mainWindow.webContents.send('client-data', receivedData);
 };
 
-// When a new client connects
-socket.on('connection', function() {
-    console.log('A new client has connected!');
-    // Show popup notification in the Electron UI when a client connects
-    dialog.showMessageBox(mainWindow, {
-        type: 'info',
-        title: 'New Client Connected',
-        message: 'A new client has successfully connected to the server.',
-    });
-});
-
-// Handle errors
-socket.onerror = function(error) {
-    console.log('WebSocket Error:', error);
+socket.onerror = (error) => {
+    console.error('WebSocket error:', error);
 };
 
-// Handle WebSocket closure
-socket.onclose = function() {
+socket.onclose = () => {
     console.log('Disconnected from signaling server');
 };
 
-// Run the app
+// Handle client click event (from client UI)
+ipcMain.on('client-clicked', (event, message) => {
+    console.log('Client clicked:', message);
+    dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Client Action',
+        message: `Client said: ${message}`,
+    });
+});
+
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {

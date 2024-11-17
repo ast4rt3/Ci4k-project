@@ -6,20 +6,25 @@ const reconnectBtn = document.getElementById('reconnectBtn');
 // Function to establish a WebSocket connection
 function connectToServer() {
     console.log('Attempting to connect to WebSocket server...');
-    // Update status message
     statusDiv.innerText = 'Connecting to signaling server...';
 
-    socket = new WebSocket('ws://192.168.1.69:8080'); // Ensure the server is running on this port
+    socket = new WebSocket('ws://192.168.1.69:8080');
 
     socket.addEventListener('open', () => {
         console.log('WebSocket connection established');
         statusDiv.innerText = 'Connected to signaling server';
+
+        // Send initial client info
+        const clientInfo = {
+            type: 'client-info',
+            username: 'ClientUsername',
+        };
+        socket.send(JSON.stringify(clientInfo));
     });
 
     socket.addEventListener('message', (event) => {
         const message = JSON.parse(event.data);
         console.log('Received message:', message);
-        // Display the received message in the message log
         messageLogDiv.innerHTML += `<p>Received: ${JSON.stringify(message)}</p>`;
     });
 
@@ -34,27 +39,31 @@ function connectToServer() {
     });
 }
 
-// Function to reconnect to the WebSocket server
+// Reconnect to the WebSocket server
 function reconnect() {
     console.log('Reconnect button clicked');
     if (socket && socket.readyState === WebSocket.OPEN) {
         console.log('Already connected, no need to reconnect');
-        statusDiv.innerText = 'Already connected to server';
         return;
     }
 
-    // Close the existing socket if it's open
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log('Closing existing WebSocket connection...');
+    if (socket) {
         socket.close();
     }
-
-    // Reconnect to the server
     connectToServer();
 }
 
-// Event listener for reconnect button
-reconnectBtn.addEventListener('click', reconnect);
+// Notify the admin when a button is clicked
+function notifyAdmin() {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        const clickMessage = {
+            type: 'client-action',
+            action: 'button-click',
+            message: 'Hello from Client!',
+        };
+        socket.send(JSON.stringify(clickMessage));
+    }
+}
 
-// Initial connection
+reconnectBtn.addEventListener('click', reconnect);
 connectToServer();
