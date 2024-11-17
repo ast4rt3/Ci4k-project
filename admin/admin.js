@@ -24,7 +24,7 @@ function createWindow() {
 
 // Setup WebSocket connection
 function setupWebSocket() {
-    socket = new WebSocket('ws://192.168.1.69:8080');
+    socket = new WebSocket('ws://192.168.1.222:8080');
 
     socket.onopen = () => {
         console.log('Admin connected to signaling server');
