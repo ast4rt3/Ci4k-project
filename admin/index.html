@@ -7,16 +7,13 @@
 </head>
 <body>
     <h1>Admin Panel</h1>
-    <div id="clientData">Client data will appear here</div>
+    <div id="clientData">Waiting for client data...</div>
 
     <script>
-        const { ipcRenderer } = require('electron');
-
-        // Listen for client data updates
-        ipcRenderer.on('client-data', (event, data) => {
+        window.electronAPI.onClientData((event, data) => {
             const clientDataDiv = document.getElementById('clientData');
             clientDataDiv.innerHTML = `
-                <p>Client Username: ${data.username}</p>
+                <p>Client Username: ${data.username || 'Unknown'}</p>
                 <p>Message: ${data.message || 'No message'}</p>
             `;
         });

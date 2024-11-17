@@ -9,7 +9,7 @@ wss.on('connection', (ws) => {
         console.log('Received:', message);
         const parsedMessage = JSON.parse(message);
 
-        // Broadcast messages to admin or other clients
+        // Broadcast the message to all connected clients
         wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(message);

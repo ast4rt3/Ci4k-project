@@ -24,7 +24,8 @@ function connectToServer() {
 
     socket.addEventListener('message', (event) => {
         const message = JSON.parse(event.data);
-        messageLogDiv.innerHTML += `<p>Received: ${JSON.stringify(message)}</p>`;
+        console.log('Received:', message);
+        messageLogDiv.innerHTML += `<p>Server: ${JSON.stringify(message)}</p>`;
     });
 
     socket.addEventListener('close', () => {
@@ -43,7 +44,7 @@ function notifyAdmin() {
     if (socket && socket.readyState === WebSocket.OPEN) {
         const clickMessage = {
             type: 'client-action',
-            action: 'button-click',
+            username: 'ClientUsername',
             message: 'Hello to Admin!',
         };
         socket.send(JSON.stringify(clickMessage));
