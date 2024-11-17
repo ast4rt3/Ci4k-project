@@ -54,3 +54,16 @@ app.on('window-all-closed', () => {
         app.quit();
     }
 });
+
+notifyAdminBtn.addEventListener('click', () => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        const message = {
+            type: 'client-action',
+            username: 'ClientUsername',
+            message: 'Hello to Admin!',
+        };
+        socket.send(JSON.stringify(message));
+    } else {
+        console.error('Cannot notify admin, WebSocket not open');
+    }
+});
