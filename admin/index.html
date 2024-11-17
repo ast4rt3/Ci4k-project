@@ -8,6 +8,7 @@
 <body>
     <h1>Admin Panel</h1>
     <div id="clientData">Waiting for client data...</div>
+    <div id="messageLog">Message</div>
 
     <script>
         window.electronAPI.onClientData((data) => {
@@ -21,6 +22,7 @@
             `;
         });
     </script>
-    <div id="messageLog"></div>
+    <script src="admin.js"></script>
+    
 </body>
 </html>
