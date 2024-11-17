@@ -10,7 +10,10 @@
     <div id="clientData">Waiting for client data...</div>
 
     <script>
-        window.electronAPI.onClientData((event, data) => {
+        window.electronAPI.onClientData((data) => {
+            console.log('Data received on admin UI:', data);
+
+            // Update clientData with the received data
             const clientDataDiv = document.getElementById('clientData');
             clientDataDiv.innerHTML = `
                 <p>Client Username: ${data.username || 'Unknown'}</p>

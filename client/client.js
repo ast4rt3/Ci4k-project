@@ -1,31 +1,27 @@
-let socket;
 const statusDiv = document.getElementById('status');
 const messageLogDiv = document.getElementById('messageLog');
-const reconnectBtn = document.getElementById('reconnectBtn');
 const notifyAdminBtn = document.getElementById('notifyAdminBtn');
+let socket;
 
-// Function to establish a WebSocket connection
 function connectToServer() {
     statusDiv.innerText = 'Connecting to signaling server...';
 
     socket = new WebSocket('ws://192.168.1.69:8080');
 
     socket.addEventListener('open', () => {
-        console.log('WebSocket connection established');
+        console.log('Client connected to signaling server');
         statusDiv.innerText = 'Connected to signaling server';
 
         // Send initial client info
-        const clientInfo = {
+        socket.send(JSON.stringify({
             type: 'client-info',
             username: 'ClientUsername',
-        };
-        socket.send(JSON.stringify(clientInfo));
+        }));
     });
 
     socket.addEventListener('message', (event) => {
-        const message = JSON.parse(event.data);
-        console.log('Received:', message);
-        messageLogDiv.innerHTML += `<p>Server: ${JSON.stringify(message)}</p>`;
+        console.log('Message received on client:', event.data);
+        messageLogDiv.innerHTML += `<p>${event.data}</p>`;
     });
 
     socket.addEventListener('close', () => {
@@ -39,23 +35,18 @@ function connectToServer() {
     });
 }
 
-// Notify the admin when the button is clicked
-function notifyAdmin() {
+notifyAdminBtn.addEventListener('click', () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
-        const clickMessage = {
+        const message = {
             type: 'client-action',
             username: 'ClientUsername',
             message: 'Hello to Admin!',
         };
-        socket.send(JSON.stringify(clickMessage));
+        socket.send(JSON.stringify(message));
     } else {
-        console.error('Cannot send message, socket is not open');
+        console.error('Cannot notify admin, WebSocket not open');
     }
-}
+});
 
-// Event listeners
-reconnectBtn.addEventListener('click', connectToServer);
-notifyAdminBtn.addEventListener('click', notifyAdmin);
-
-// Initial connection
+// Connect on load
 connectToServer();

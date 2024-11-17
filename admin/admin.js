@@ -1,44 +1,51 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const WebSocket = require('ws');
 const path = require('path');
 
 let mainWindow;
+let socket;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
         webPreferences: {
-            contextIsolation: true,
             preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
         },
     });
 
     mainWindow.loadFile('admin/index.html');
+
+    // Initialize WebSocket after the window is ready
+    setupWebSocket();
 }
 
-// WebSocket setup
-const socket = new WebSocket('ws://192.168.1.69:8080');
+function setupWebSocket() {
+    socket = new WebSocket('ws://192.168.1.69:8080');
 
-socket.onopen = () => {
-    console.log('Admin connected to signaling server');
-};
+    socket.onopen = () => {
+        console.log('Admin connected to signaling server');
+    };
 
-socket.onmessage = (event) => {
-    const receivedData = JSON.parse(event.data);
-    console.log('Message received in admin:', receivedData);
+    socket.onmessage = (event) => {
+        console.log('Message received on admin:', event.data);
+        const data = JSON.parse(event.data);
 
-    // Forward the data to the renderer process
-    mainWindow.webContents.send('client-data', receivedData);
-};
+        // Forward the message to the renderer
+        if (mainWindow && mainWindow.webContents) {
+            mainWindow.webContents.send('client-data', data);
+        }
+    };
 
-socket.onerror = (error) => {
-    console.error('WebSocket error in admin:', error);
-};
+    socket.onerror = (error) => {
+        console.error('WebSocket error on admin:', error);
+    };
 
-socket.onclose = () => {
-    console.log('Disconnected from signaling server');
-};
+    socket.onclose = () => {
+        console.log('Disconnected from signaling server');
+    };
+}
 
 app.whenReady().then(createWindow);
 
