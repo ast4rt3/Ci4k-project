@@ -7,19 +7,38 @@
 </head>
 <body>
     <h1>Admin Panel</h1>
-    <div id="clientData">Waiting for client data...</div>
+    <div id="status">Connecting to signaling server...</div>
+    
+    <h2>Connected Clients</h2>
+    <ul id="clientList">
+        <!-- Connected clients will appear here -->
+    </ul>
+    
+    <button id="reconnectBtn">Reconnect to Server</button>
 
     <script>
-        // Listen for WebSocket messages
-        window.electronAPI.onClientData((data) => {
-            console.log('Data received on admin UI:', data);
+        // Listen for client list updates
+        window.electronAPI.onClientData((clients) => {
+            const clientList = document.getElementById('clientList');
+            clientList.innerHTML = ''; // Clear the list
 
-            // Update the admin panel with client data
-            const clientDataDiv = document.getElementById('clientData');
-            clientDataDiv.innerHTML = `
-                <p><strong>Client Username:</strong> ${data.username || 'Unknown'}</p>
-                <p><strong>Message:</strong> ${data.message || 'No message'}</p>
-            `;
+            clients.forEach(client => {
+                const li = document.createElement('li');
+                li.textContent = client;
+                clientList.appendChild(li);
+            });
+        });
+
+        // Listen for status updates (connecting, connected, etc.)
+        window.electronAPI.onStatusUpdate((status) => {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = status;
+        });
+
+        // Reconnect button
+        document.getElementById('reconnectBtn').addEventListener('click', () => {
+            console.log('Reconnect button clicked');
+            window.electronAPI.reconnect();
         });
     </script>
 </body>

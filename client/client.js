@@ -1,4 +1,5 @@
 const statusDiv = document.getElementById('status');
+const messageLogDiv = document.getElementById('messageLog');
 const notifyAdminBtn = document.getElementById('notifyAdminBtn');
 let socket;
 
@@ -13,7 +14,8 @@ function connectToServer() {
     });
 
     socket.addEventListener('message', (event) => {
-        console.log('Message received on client (broadcast):', event.data);
+        console.log('Message received on client:', event.data);
+        messageLogDiv.innerHTML += `<p>Received: ${event.data}</p>`;
     });
 
     socket.addEventListener('close', () => {
@@ -31,7 +33,7 @@ notifyAdminBtn.addEventListener('click', () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
         const message = {
             type: 'client-action',
-            username: 'Ivam',
+            username: 'ClientUsername', // Replace with actual username
             message: 'Hello to Admin!',
         };
         socket.send(JSON.stringify(message)); // Send to signaling server

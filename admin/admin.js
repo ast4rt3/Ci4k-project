@@ -1,9 +1,10 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const WebSocket = require('ws');
 const path = require('path');
 
 let mainWindow;
 let socket;
+let connectedClients = [];
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -12,7 +13,7 @@ function createWindow() {
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
-        },
+        }
     });
 
     mainWindow.loadFile('admin/index.html');
@@ -21,30 +22,49 @@ function createWindow() {
     setupWebSocket();
 }
 
+// Setup WebSocket connection
 function setupWebSocket() {
     socket = new WebSocket('ws://192.168.1.69:8080');
 
     socket.onopen = () => {
         console.log('Admin connected to signaling server');
+        mainWindow.webContents.send('status-update', 'Connected to signaling server');
     };
 
     socket.onmessage = (event) => {
-        console.log('Message received on admin:', event.data);
         const data = JSON.parse(event.data);
+        console.log('Received message on admin:', data);
 
-        // Send the data to renderer process (admin UI)
-        if (mainWindow && mainWindow.webContents) {
-            mainWindow.webContents.send('client-data', data); // Pass data to renderer
+        // Handle client-connected and client-disconnected messages
+        if (data.type === 'client-connected') {
+            connectedClients.push(data.clientId);
+        } else if (data.type === 'client-disconnected') {
+            connectedClients = connectedClients.filter(client => client !== data.clientId);
         }
+
+        // Send the updated client list to the renderer
+        mainWindow.webContents.send('update-client-list', connectedClients);
     };
 
     socket.onerror = (error) => {
         console.error('WebSocket error on admin:', error);
+        mainWindow.webContents.send('status-update', 'Error connecting to signaling server');
     };
 
     socket.onclose = () => {
-        console.log('Disconnected from signaling server');
+        console.log('Admin disconnected from signaling server');
+        mainWindow.webContents.send('status-update', 'Disconnected from signaling server');
     };
+}
+
+// Reconnect to signaling server
+function reconnect() {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        console.log('Already connected, no need to reconnect');
+        return;
+    }
+
+    setupWebSocket();  // Reconnect logic
 }
 
 app.whenReady().then(createWindow);
@@ -54,3 +74,6 @@ app.on('window-all-closed', () => {
         app.quit();
     }
 });
+
+// Listen for the reconnect action from the renderer
+ipcMain.on('reconnect', reconnect);
