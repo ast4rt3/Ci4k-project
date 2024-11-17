@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const WebSocket = require('ws');
 const path = require('path');
 
@@ -11,7 +11,7 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js'), // Use preload for secure communication
+            preload: path.join(__dirname, 'preload.js'),
         },
     });
 
@@ -39,14 +39,10 @@ socket.onclose = () => {
     console.log('Disconnected from signaling server');
 };
 
-// Handle client click event (from client UI)
-ipcMain.on('client-clicked', (event, message) => {
-    console.log('Client clicked:', message);
-    dialog.showMessageBox(mainWindow, {
-        type: 'info',
-        title: 'Client Action',
-        message: `Client said: ${message}`,
-    });
+// Listen for IPC messages from renderer
+ipcMain.on('admin-action', (event, action) => {
+    console.log('Admin action:', action);
+    // Additional admin actions can be handled here
 });
 
 app.whenReady().then(createWindow);

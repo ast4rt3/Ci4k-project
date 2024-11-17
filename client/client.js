@@ -2,10 +2,10 @@ let socket;
 const statusDiv = document.getElementById('status');
 const messageLogDiv = document.getElementById('messageLog');
 const reconnectBtn = document.getElementById('reconnectBtn');
+const notifyAdminBtn = document.getElementById('notifyAdminBtn');
 
 // Function to establish a WebSocket connection
 function connectToServer() {
-    console.log('Attempting to connect to WebSocket server...');
     statusDiv.innerText = 'Connecting to signaling server...';
 
     socket = new WebSocket('ws://192.168.1.69:8080');
@@ -24,7 +24,6 @@ function connectToServer() {
 
     socket.addEventListener('message', (event) => {
         const message = JSON.parse(event.data);
-        console.log('Received message:', message);
         messageLogDiv.innerHTML += `<p>Received: ${JSON.stringify(message)}</p>`;
     });
 
@@ -39,31 +38,23 @@ function connectToServer() {
     });
 }
 
-// Reconnect to the WebSocket server
-function reconnect() {
-    console.log('Reconnect button clicked');
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log('Already connected, no need to reconnect');
-        return;
-    }
-
-    if (socket) {
-        socket.close();
-    }
-    connectToServer();
-}
-
-// Notify the admin when a button is clicked
+// Notify the admin when the button is clicked
 function notifyAdmin() {
     if (socket && socket.readyState === WebSocket.OPEN) {
         const clickMessage = {
             type: 'client-action',
             action: 'button-click',
-            message: 'Hello from Client!',
+            message: 'Hello to Admin!',
         };
         socket.send(JSON.stringify(clickMessage));
+    } else {
+        console.error('Cannot send message, socket is not open');
     }
 }
 
-reconnectBtn.addEventListener('click', reconnect);
+// Event listeners
+reconnectBtn.addEventListener('click', connectToServer);
+notifyAdminBtn.addEventListener('click', notifyAdmin);
+
+// Initial connection
 connectToServer();
