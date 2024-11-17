@@ -1,6 +1,5 @@
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog } = require('electron');
 const WebSocket = require('ws');
-const path = require('path');
 
 // Create the Electron window
 let mainWindow;
@@ -19,7 +18,7 @@ function createWindow() {
 }
 
 // WebSocket setup
-const socket = new WebSocket('ws://192.168.1.69:8080'); // Replace with your signaling server IP
+const socket = new WebSocket('ws://192.168.1.69:8080');
 
 // When WebSocket connection is opened
 socket.onopen = function() {
@@ -30,11 +29,7 @@ socket.onopen = function() {
 socket.onmessage = function(event) {
     console.log('Received message:', event.data);
     const receivedData = JSON.parse(event.data);  // If data is JSON
-
-    // If the message contains the client username, send it to the renderer process
-    if (receivedData.type === 'client-info') {
-        mainWindow.webContents.send('client-data', receivedData.username);  // Send username to the renderer
-    }
+    mainWindow.webContents.send('client-data', receivedData);  // Send data to renderer process
 };
 
 // When a new client connects

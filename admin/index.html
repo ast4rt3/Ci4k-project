@@ -11,7 +11,7 @@
     <div id="clientMessages">Messages from client will appear here</div>
     <script>
         // Establish WebSocket connection to the signaling server
-        const socket = new WebSocket('ws://192.169.1.69:8080'); //kung e run sa lab dapat e setup IPv4 to
+        const socket = new WebSocket('ws://192.169.1.69:8080'); //kung e run sa lab dapat e setup IPv4 to 192.169.1.69
 
         // Listen for messages from the signaling server
         socket.addEventListener('message', (event) => {
@@ -33,6 +33,5 @@
             console.error('WebSocket error:', error);
         });
     </script>
-     <script src="renderer.js"></script>
 </body>
 </html>
