@@ -19,8 +19,20 @@ wss.on('connection', (ws) => {
     // Handle messages from clients
     ws.on('message', (message) => {
         console.log('Message received:', message);
-        // Broadcast to other clients (including admin)
-        broadcastToAllClients(message);
+
+        // If the message is a buffer, convert it to a string
+        if (Buffer.isBuffer(message)) {
+            message = message.toString();  // Convert buffer to string
+        }
+
+        try {
+            const parsedMessage = JSON.parse(message);
+            console.log('Parsed message:', parsedMessage);
+            // Broadcast to all clients (including admin)
+            broadcastToAllClients(message);
+        } catch (err) {
+            console.error('Error parsing message:', err);
+        }
     });
 
     // When the client disconnects

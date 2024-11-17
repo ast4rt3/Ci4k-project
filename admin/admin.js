@@ -40,6 +40,9 @@ function setupWebSocket() {
             connectedClients.push(data.clientId);
         } else if (data.type === 'client-disconnected') {
             connectedClients = connectedClients.filter(client => client !== data.clientId);
+        } else if (data.type === 'client-action') {
+            // This is the message we want to display in the UI
+            mainWindow.webContents.send('client-action-message', data.message);
         }
 
         // Send the updated client list to the renderer

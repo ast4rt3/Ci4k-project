@@ -14,33 +14,19 @@ function connectToServer() {
     });
 
     socket.addEventListener('message', (event) => {
-        console.log('Message received on client:', event.data);
-        messageLogDiv.innerHTML += `<p>Received: ${event.data}</p>`;
-    });
-
-    socket.addEventListener('close', () => {
-        console.log('WebSocket connection closed');
-        statusDiv.innerText = 'Disconnected from signaling server';
-    });
-
-    socket.addEventListener('error', (error) => {
-        console.error('WebSocket error:', error);
-        statusDiv.innerText = 'Error connecting to signaling server';
+        const data = JSON.parse(event.data);
+        if (data.type === 'client-action') {
+            const messageElement = document.createElement('p');
+            messageElement.textContent = `Received: ${data.message}`;
+            messageLogDiv.appendChild(messageElement);
+        }
     });
 }
 
-notifyAdminBtn.addEventListener('click', () => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        const message = {
-            type: 'client-action',
-            username: 'ClientUsername', // Replace with actual username
-            message: 'Hello to Admin!',
-        };
-        socket.send(JSON.stringify(message)); // Send to signaling server
-    } else {
-        console.error('Cannot notify admin, WebSocket not open');
-    }
-});
-
-// Connect on load
 connectToServer();
+
+// Send message to the server (Admin)
+notifyAdminBtn.addEventListener('click', () => {
+    const message = { type: 'client-action', message: 'Client is requesting action' };
+    socket.send(JSON.stringify(message));
+});
