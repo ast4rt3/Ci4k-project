@@ -3,12 +3,6 @@ const statusDiv = document.getElementById('status');
 const messageLogDiv = document.getElementById('messageLog');
 const reconnectBtn = document.getElementById('reconnectBtn');
 
-document.getElementById('clickButton').addEventListener('click', () => {
-    // Send a message to the main process when the button is clicked
-    window.electronAPI.sendMessageToAdmin("Client has clicked the button!");
-});
-
-
 // Function to establish a WebSocket connection
 function connectToServer() {
     console.log('Attempting to connect to WebSocket server...');
