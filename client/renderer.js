@@ -1,46 +1,50 @@
 window.onload = () => {
-  const ws = new WebSocket('ws://192.168.1.69:8080'); // Server IP and port
-  const status = document.getElementById('status');
-  const loginForm = document.getElementById('login-form');
-  const connectBtn = document.getElementById('connect-btn'); // Button reference
+  const ws = new WebSocket('ws://192.168.1.69:8080'); // Change localhost to your local IP
+  const status = document.getElementById('status'); // Display connection status
 
-  // WebSocket connection open event
+  // When the WebSocket connection is opened successfully
   ws.onopen = () => {
-    console.log('Client connected to WebSocket server');
-    status.textContent = 'Connected to server!';
+    status.textContent = 'Connected successfully!';
+    console.log('Connected to the server');
   };
 
-  // WebSocket message event for receiving data from server
+  // When the WebSocket connection is closed
+  ws.onclose = () => {
+    status.textContent = 'Connection lost!';
+    console.log('Connection closed');
+  };
+
+  // Handle incoming messages from the server
   ws.onmessage = (message) => {
     const data = JSON.parse(message.data);
-    
+    console.log('Received message:', data);
+
     if (data.type === 'loginResponse') {
       if (data.success) {
         status.textContent = 'Logged in successfully!';
       } else {
-        status.textContent = 'Login failed. Invalid credentials.';
+        status.textContent = 'Login failed. Try again.';
       }
     }
 
+    // Handle logout
     if (data.type === 'logout') {
       alert('You have been logged out.');
       window.location.reload();
     }
   };
 
-  // Handle login form submission
+  // Handle errors
+  ws.onerror = (error) => {
+    console.log('WebSocket error:', error);
+    status.textContent = 'WebSocket error occurred';
+  };
+
+  // Handle form submission for login
+  const loginForm = document.getElementById('login-form');
   loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-
-    // Send login request to the WebSocket server
-    ws.send(JSON.stringify({ type: 'login', username, password }));
-  });
-
-  // Handle "Connect" button click to notify admin
-  connectBtn.addEventListener('click', () => {
-    const username = document.getElementById('username').value;
-    ws.send(JSON.stringify({ type: 'clientConnected', clientId: username }));
+    const clientId = document.getElementById('username').value;
+    ws.send(JSON.stringify({ type: 'login', clientId }));
   });
 };
