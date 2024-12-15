@@ -109,10 +109,10 @@ function updateClientTable(clients) {
 
 // Logout a client
 function logoutClient(clientId) {
-    ws.send(JSON.stringify({ type: 'logout', clientId }));
-    console.log(`Logout request sent for client: ${clientId}`);
-  }
-  
+  ws.send(JSON.stringify({ type: 'logout', clientId }));
+  console.log(`Logout request sent for client: ${clientId}`);
+}
+
 // Format duration in seconds to a readable format
 function formatDuration(seconds) {
   const minutes = Math.floor(seconds / 60);
@@ -133,17 +133,3 @@ function formatDuration(seconds) {
 setInterval(() => {
   ws.send(JSON.stringify({ type: 'updateClients' }));
 }, 1000); // Update every second
-
-
-function updateUserStatus(clientId, status, duration) {
-  const row = document.getElementById(`client-${clientId}`);
-  if (row) {
-    const statusCell = row.children[1]; // Status column
-    const timeCell = row.children[2];  // Connection time column
-
-    // Update the status and connection time
-    statusCell.textContent = status;
-    timeCell.textContent = `Duration: ${duration}`;
-    row.style.backgroundColor = '#f8d7da'; // Optional: Highlight disconnected user row
-  }
-}
