@@ -5,33 +5,34 @@ let connected = false;
 
 // Function to start WebSocket connection
 function connect() {
-  ws = new WebSocket('ws://192.168.1.21:8080');  // Replace with your server's IP
+  ws = new WebSocket('ws://192.168.1.21:8080');  // Connect to WebSocket server
 
-  ws.onopen = function() {
+  ws.onopen = () => {
     document.getElementById('status').textContent = 'Connected!';
     connected = true;
     startTime = Date.now();
     startTrackingTime();
   };
 
-  ws.onclose = function() {
+  ws.onclose = () => {
     document.getElementById('status').textContent = 'Connection Lost!';
     connected = false;
     stopTrackingTime();
   };
 
-  ws.onerror = function(error) {
+  ws.onerror = (error) => {
     console.error('WebSocket error:', error);
+    document.getElementById('status').textContent = 'Connection failed';
   };
 }
 
-// Function to track time
+// Function to track time spent
 function startTrackingTime() {
-  timer = setInterval(function() {
+  timer = setInterval(() => {
     if (connected) {
       let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
       document.getElementById('timeSpent').textContent = `Time Spent: ${elapsedTime}s`;
-      
+
       // Send the time spent to the server
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'timeUpdate', timeSpent: elapsedTime }));
@@ -55,43 +56,22 @@ function disconnect() {
   document.getElementById('status').textContent = 'Disconnected';
 }
 
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-
-// Function to create the client window (small window)
-function createClientWindow() {
-    // Get the screen size to place the window at the bottom-right
-    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  
-    clientWindow = new BrowserWindow({
-      width: 250,  // Small window size for client
-      height: 150,  // Small window size for client
-      x: width - 250,  // Position it at the right
-      y: height - 150,  // Position it at the bottom
-      frame: false,  // Remove the frame
-      resizable: false,  // Prevent resizing
-      transparent: true,  // Optional transparency
-      alwaysOnTop: true,  // Keep it on top
-      webPreferences: {
-        nodeIntegration: true,
-        preload: path.join(__dirname, 'client/renderer.js')  // Path to client-side JS
-      }
-    });
-  
-    clientWindow.loadFile('client/client.html');  // Path to your client-side HTML
-    clientWindow.on('closed', () => {
-      clientWindow = null;
-    });
-  }
-
-app.whenReady().then(createWindow);
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-
 // Automatically attempt to connect on page load
-window.onload = connect;
+window.onload = () => {
+  connect();
+
+  // Handle login form submission (if there's a login form in the HTML)
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) {
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const clientId = document.getElementById('username').value;
+
+      // Send login request to the server
+      ws.send(JSON.stringify({
+        type: 'login',
+        clientId: clientId,
+      }));
+    });
+  }
+};
