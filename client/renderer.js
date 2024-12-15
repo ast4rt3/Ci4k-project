@@ -76,6 +76,10 @@ function disconnect() {
   document.getElementById('status').textContent = 'Disconnected';
 }
 
+
+
+
+
 // Automatically attempt to connect on page load
 window.onload = () => {
   connectWebSocket();
