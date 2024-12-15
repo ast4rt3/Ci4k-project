@@ -1,45 +1,48 @@
 window.onload = () => {
+  const ws = new WebSocket('ws://localhost:8080');
+
   if (document.title === 'Admin Dashboard') {
     const clientTable = document.querySelector('#client-table tbody');
 
-    window.api.on('updateClients', (clients) => {
-      clientTable.innerHTML = '';
-      clients.forEach((client) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${client.id}</td>
-          <td>${client.status}</td>
-          <td>${client.sessionTime}</td>
-          <td>
-            <button onclick="forceLogout(${client.id})">Logout</button>
-          </td>
-        `;
-        clientTable.appendChild(row);
-      });
-    });
+    ws.onmessage = (message) => {
+      const data = JSON.parse(message.data);
+      if (data.type === 'updateClients') {
+        clientTable.innerHTML = '';
+        data.clients.forEach((client) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${client.id}</td>
+            <td>${client.status}</td>
+            <td>
+              <button onclick="logoutClient('${client.id}')">Logout</button>
+            </td>
+          `;
+          clientTable.appendChild(row);
+        });
+      }
+    };
+
+    window.logoutClient = (clientId) => {
+      window.api.send('forceLogout', clientId);
+    };
   } else if (document.title === 'Client Login') {
-    const form = document.getElementById('login-form');
+    const loginForm = document.getElementById('login-form');
     const status = document.getElementById('status');
 
-    form.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
+      const clientId = document.getElementById('username').value;
 
-      window.api.send('login', { username, password });
-
-      window.api.on('loginResponse', (response) => {
-        if (response.success) {
-          status.textContent = `Login successful! Welcome ${response.role}.`;
-        } else {
-          status.textContent = 'Login failed. Try again.';
-        }
-      });
+      ws.send(JSON.stringify({ type: 'login', clientId }));
+      status.textContent = 'Logged in successfully!';
     });
 
-    window.api.on('logout', ({ clientId }) => {
-      alert(`You have been logged out (Client ID: ${clientId}).`);
-      window.location.reload();
-    });
+    ws.onmessage = (message) => {
+      const data = JSON.parse(message.data);
+      if (data.type === 'logout') {
+        alert('You have been logged out.');
+        window.location.reload();
+      }
+    };
   }
 };
