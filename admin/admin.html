@@ -1,22 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        #notification {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <h1>Admin Dashboard</h1>
-  <table id="client-table">
-    <thead>
-      <tr>
-        <th>Client ID</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <h1>Admin Dashboard</h1>
+    <div id="notification"></div>
+    <ul id="connectedUsers">
+        <li>No users connected</li>
+    </ul>
 
-  <script src="renderer.js"></script>
+    <script src="admin.js"></script>
 </body>
 </html>
