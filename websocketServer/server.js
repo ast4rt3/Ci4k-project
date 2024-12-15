@@ -92,3 +92,23 @@ function broadcast(message) {
 }
 
 console.log('WebSocket server running on ws://192.168.1.21:8080');
+
+
+// Add to your server.js file (optional API)
+const express = require('express');
+const app = express();
+const port = 3000;
+
+app.get('/clients', (req, res) => {
+  db.all('SELECT * FROM clients', [], (err, rows) => {
+    if (err) {
+      throw err;
+    }
+    res.json(rows);  // Send client data as JSON
+  });
+});
+
+app.listen(port, () => {
+  console.log(`Admin API running on http://localhost:${port}`);
+});
+

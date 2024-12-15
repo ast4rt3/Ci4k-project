@@ -1,4 +1,4 @@
-const ws = new WebSocket('ws://192.168.1.21:8080');  // Connect to the WebSocket server
+const ws = new WebSocket('ws://192.168.1.21:8080'); // WebSocket server connection
 
 ws.onopen = () => {
   console.log('Connected to WebSocket server');
@@ -15,14 +15,19 @@ ws.onmessage = (message) => {
   if (data.type === 'newUser') {
     // A new user connected
     showNotification(`New user connected: ${data.clientId}`);
-    addUserToList(data.clientId);
+    addUserToTable(data.clientId, data.connectTime); // Add user details to the table
   }
 
   if (data.type === 'userDisconnected') {
     // A user disconnected
     const duration = formatDuration(data.duration);
     showNotification(`User ${data.clientId} disconnected. Duration: ${duration}`);
-    removeUserFromList(data.clientId);
+    updateUserStatus(data.clientId, 'Disconnected', duration);
+  }
+
+  if (data.type === 'clientList') {
+    // Updates the list of connected clients
+    updateClientTable(data.clients);
   }
 };
 
@@ -34,44 +39,97 @@ function showNotification(message) {
 
   setTimeout(() => {
     notification.style.display = 'none';
-  }, 5000);  // Hide notification after 5 seconds
+  }, 5000); // Hide notification after 5 seconds
 }
 
-// Add a new user to the connected users list
-function addUserToList(clientId) {
-  const list = document.getElementById('connectedUsers');
-  const listItem = document.createElement('li');
-  listItem.id = `user-${clientId}`;
-  listItem.textContent = `${clientId} (Connected)`;
-  list.appendChild(listItem);
+// Add a connected client to the table
+function addUserToTable(clientId, timestamp) {
+  const tableBody = document.getElementById('client-table-body');
+  const row = document.createElement('tr');
+  row.id = `client-${clientId}`;
+
+  // Convert timestamp to readable time
+  const connectTime = new Date(timestamp).toLocaleTimeString();
+
+  row.innerHTML = `
+    <td>${clientId}</td>
+    <td>Connected</td>
+    <td id="time-${clientId}">Joined at: ${connectTime}</td>
+    <td>
+      <button onclick="logoutClient('${clientId}')">Logout</button>
+    </td>
+  `;
+
+  tableBody.appendChild(row);
 }
 
-// Remove a user from the list when they disconnect
-function removeUserFromList(clientId) {
-  const list = document.getElementById('connectedUsers');
-  const listItem = document.getElementById(`user-${clientId}`);
-  if (listItem) {
-    listItem.textContent = `${clientId} (Disconnected)`;
-    listItem.style.textDecoration = 'line-through';  // Optional: Strike through disconnected user
+// Update user status when disconnected
+function updateUserStatus(clientId, status, duration) {
+  const row = document.getElementById(`client-${clientId}`);
+  if (row) {
+    const statusCell = row.children[1]; // Status column
+    const timeCell = row.children[2];  // Connection time column
+
+    statusCell.textContent = status;
+    timeCell.textContent = `Duration: ${duration}`;
+    row.style.backgroundColor = '#f8d7da'; // Optional: Highlight disconnected user row
   }
 }
 
-// Format duration in seconds to a readable format (e.g., "5 minutes", "2 hours")
+// Update the full client table (e.g., for periodic updates)
+function updateClientTable(clients) {
+  const tableBody = document.getElementById('client-table-body');
+  tableBody.innerHTML = ''; // Clear the table before updating
+
+  clients.forEach((client) => {
+    const row = document.createElement('tr');
+    row.id = `client-${client.id}`;
+
+    const duration = client.duration
+      ? `Duration: ${formatDuration(client.duration)}`
+      : 'Connected';
+
+    const status = client.status || 'Connected';
+    const connectTime = client.connectTime
+      ? new Date(client.connectTime).toLocaleTimeString()
+      : 'Unknown';
+
+    row.innerHTML = `
+      <td>${client.id}</td>
+      <td>${status}</td>
+      <td>${duration}</td>
+      <td>
+        <button onclick="logoutClient('${client.id}')">Logout</button>
+      </td>
+    `;
+
+    tableBody.appendChild(row);
+  });
+}
+
+// Logout a client
+function logoutClient(clientId) {
+    ws.send(JSON.stringify({ type: 'logout', clientId }));
+    console.log(`Logout request sent for client: ${clientId}`);
+  }
+  
+// Format duration in seconds to a readable format
 function formatDuration(seconds) {
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
+  const remainingSeconds = seconds % 60;
+
   if (hours > 0) {
-    return `${hours} hours ${remainingMinutes} minutes`;
+    return `${hours}h ${remainingMinutes}m ${remainingSeconds}s`;
   }
-  return `${minutes} minutes`;
+  if (minutes > 0) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+  return `${remainingSeconds}s`;
 }
 
-
-// admin.js
-fetch('http://localhost:3000/clients')
-  .then((response) => response.json())
-  .then((data) => {
-    console.log(data); // Display client data on the admin side
-  })
-  .catch((error) => console.error('Error fetching client data:', error));
+// Periodically request client updates from the server
+setInterval(() => {
+  ws.send(JSON.stringify({ type: 'updateClients' }));
+}, 1000); // Update every second

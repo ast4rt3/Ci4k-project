@@ -31,6 +31,11 @@ function startTrackingTime() {
     if (connected) {
       let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
       document.getElementById('timeSpent').textContent = `Time Spent: ${elapsedTime}s`;
+      
+      // Send the time spent to the server
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'timeUpdate', timeSpent: elapsedTime }));
+      }
     }
   }, 1000);
 }
