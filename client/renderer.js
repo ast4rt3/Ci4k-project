@@ -1,18 +1,41 @@
-const ws = new WebSocket('ws://192.168.1.69:8080');
+window.onload = () => {
+  const ws = new WebSocket('ws://192.168.1.21:8080'); // Connect to the WebSocket server
 
-ws.onopen = () => {
-  console.log('Connected to WebSocket server!');
-  ws.send(JSON.stringify({ type: 'ping' }));  // Send a test message
-};
+  // Log WebSocket connection errors for debugging
+  ws.onerror = (error) => {
+    console.error('WebSocket Error:', error);
+  };
 
-ws.onmessage = (message) => {
-  console.log('Received from server:', message.data);
-};
+  // Handle WebSocket messages
+  ws.onmessage = (message) => {
+    const data = JSON.parse(message.data);
+    console.log('Received:', data);
 
-ws.onerror = (error) => {
-  console.error('WebSocket Error:', error);
-};
+    if (data.type === 'loginResponse') {
+      const status = document.getElementById('status');
+      if (data.success) {
+        status.textContent = 'Logged in successfully!';
+      } else {
+        status.textContent = 'Login failed. Try again.';
+      }
+    }
 
-ws.onclose = (event) => {
-  console.log('Connection closed:', event);
+    if (data.type === 'logout') {
+      alert('You have been logged out.');
+      window.location.reload();
+    }
+  };
+
+  // Handle the login form submission
+  const loginForm = document.getElementById('login-form');
+  loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const clientId = document.getElementById('username').value;
+
+    // Send login request to the server
+    ws.send(JSON.stringify({
+      type: 'login',
+      clientId: clientId,
+    }));
+  });
 };
