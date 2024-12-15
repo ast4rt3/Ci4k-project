@@ -12,7 +12,7 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
         localStorage.setItem('isLoggedIn', 'true');
         
         // Redirect to the client page
-        window.location.href = 'C:\Users\law\Documents\Moonless_Project\Ci4k-project\client\client.html';  // Make sure client.html exists
+        window.location.href = window.location.href = 'client/client.html';  // Make sure client.html exists
     } else {
         alert('Invalid username or password');
     }
