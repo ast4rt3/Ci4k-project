@@ -112,3 +112,48 @@ app.listen(port, () => {
   console.log(`Admin API running on http://localhost:${port}`);
 });
 
+ws.on('message', (message) => {
+    const data = JSON.parse(message);
+    console.log('Received:', data);
+  
+    if (data.type === 'logout') {
+      const clientIdToLogout = data.clientId;
+  
+      // Find the client WebSocket
+      const client = connectedClients[clientIdToLogout];
+      if (client) {
+        const { ws: clientWs, connectionStartTime } = client;
+        const connectionDuration = (Date.now() - connectionStartTime) / 1000; // in seconds
+  
+        // Close the WebSocket connection
+        clientWs.close();
+        console.log(`Client ${clientIdToLogout} forcefully disconnected`);
+  
+        // Update the database with disconnection time
+        db.run(
+          `UPDATE clients
+           SET lastDisconnectTime = ?
+           WHERE clientId = ?`,
+          [Date.now(), clientIdToLogout],
+          (err) => {
+            if (err) {
+              console.error('Error updating client disconnect time:', err);
+            }
+          }
+        );
+  
+        // Notify all admin dashboards about the disconnection
+        broadcast({
+          type: 'userDisconnected',
+          clientId: clientIdToLogout,
+          duration: connectionDuration,
+        });
+  
+        // Remove the client from the connected clients list
+        delete connectedClients[clientIdToLogout];
+      } else {
+        console.log(`No active connection found for client: ${clientIdToLogout}`);
+      }
+    }
+  });
+  
