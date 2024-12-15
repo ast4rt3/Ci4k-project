@@ -8,21 +8,9 @@
 <body>
     <h1>Client UI</h1>
     <div id="status">Connecting to signaling server...</div>
-    <div id="messageLog"></div>
     <button id="notifyAdminBtn">Notify Admin</button>
 
     <script src="client.js"></script>
-    <script>
-        window.electronAPI.onClientData((data) => {
-            console.log('Data received on admin UI:', data);
-
-            // Update the DOM with the received data
-            const clientDataDiv = document.getElementById('clientData');
-            clientDataDiv.innerHTML = `
-                <p>Client Username: ${data.username || 'Unknown'}</p>
-                <p>Message: ${data.message || 'No message'}</p>
-            `;
-        });
-    </script>
+    
 </body>
 </html>
