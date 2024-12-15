@@ -1,16 +1,15 @@
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ host: '192.168.1.69', port: 8080 });  // Listen on all network interfaces
+const wss = new WebSocket.Server({ port: 8080 });
 
 wss.on('connection', (ws) => {
-  console.log('A client connected');
+  console.log('A client connected'); // Log when a client connects
 
   ws.on('message', (message) => {
     const data = JSON.parse(message);
     console.log('Received:', data);
 
     if (data.type === 'login') {
-      // Example logic for validating the client login
-      const isValidClient = (data.clientId === 'validClientId'); // Replace with actual logic
+      const isValidClient = (data.clientId === 'validClientId'); // Example logic for validating the client login
 
       // Send login response back to the client
       ws.send(JSON.stringify({
@@ -20,21 +19,23 @@ wss.on('connection', (ws) => {
     }
 
     if (data.type === 'logout') {
-      // Handle client logout logic here (e.g., session management)
       ws.send(JSON.stringify({ type: 'logout' }));
     }
 
     if (data.type === 'updateClients') {
-      // Example update clients message
       const clients = [
         { id: 'client1', status: 'active' },
         { id: 'client2', status: 'inactive' },
       ];
-
       ws.send(JSON.stringify({
         type: 'updateClients',
         clients,
       }));
     }
+  });
+
+  // Log when the client disconnects
+  ws.on('close', () => {
+    console.log('A client disconnected');
   });
 });
