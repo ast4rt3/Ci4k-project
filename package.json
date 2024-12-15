@@ -4,12 +4,13 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-      "start-server": "node websocketServer/main.js",
-      "start-electron": "npx electron .",
-      "start": "npm run start-server & npm run start-electron"
+        "start-server": "node websocketServer/main.js",
+        "start-electron": "npx electron .",
+        "start": "concurrently \"npm run start-server\" \"npm run start-electron\""
     },
     "author": "",
     "license": "ISC",
-    "dependencies": {}
-  }
-  
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
