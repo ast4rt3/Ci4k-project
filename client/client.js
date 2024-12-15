@@ -58,7 +58,6 @@ function disconnect() {
 // Automatically attempt to connect on page load
 window.onload = connect;
 
-
 const { app, BrowserWindow } = require('electron');
 
 let win;
