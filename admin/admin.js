@@ -13,16 +13,16 @@ ws.onmessage = (message) => {
   console.log('Received:', data);
 
   if (data.type === 'newUser') {
-    // A new user connected
+    // A new user connected or reconnected
     showNotification(`New user connected: ${data.clientId}`);
-    addUserToTable(data.clientId, data.connectTime); // Add user details to the table
+    addUserToTable(data.clientId, data.connectTime); // Add or update user details in the table
   }
 
   if (data.type === 'userDisconnected') {
     // A user disconnected
     const duration = formatDuration(data.duration);
     showNotification(`User ${data.clientId} disconnected. Duration: ${duration}`);
-    updateUserStatus(data.clientId, 'Disconnected', duration);
+    updateUserStatus(data.clientId, 'Disconnected', data.duration);
   }
 
   if (data.type === 'clientList') {
@@ -31,39 +31,45 @@ ws.onmessage = (message) => {
   }
 };
 
+
 // Display a notification on the admin dashboard
 function showNotification(message) {
   const notification = document.getElementById('notification');
   notification.textContent = message;
   notification.style.display = 'block';
 
-  setTimeout(() => {
-    notification.style.display = 'none';
-  }, 5000); // Hide notification after 5 seconds
+  setInterval(() => {
+    ws.send(JSON.stringify({ type: 'updateClients' }));
+  }, 5000); // Update every 5 seconds
+  
 }
 
-// Add a connected client to the table
 function addUserToTable(clientId, timestamp) {
   const tableBody = document.getElementById('client-table-body');
-  const row = document.createElement('tr');
-  row.id = `client-${clientId}`;
 
-  // Convert timestamp to readable time
-  const connectTime = new Date(timestamp).toLocaleTimeString();
-
-  row.innerHTML = `
-    <td>${clientId}</td>
-    <td>Connected</td>
-    <td id="time-${clientId}">Joined at: ${connectTime}</td>
-    <td>
-      <button onclick="logoutClient('${clientId}')">Logout</button>
-    </td>
-  `;
-
-  tableBody.appendChild(row);
+  // Check if the client already exists in the table
+  let row = document.getElementById(`client-${clientId}`);
+  if (!row) {
+    // If the row doesn't exist, create a new one
+    row = document.createElement('tr');
+    row.id = `client-${clientId}`;
+    row.innerHTML = `
+      <td>${clientId}</td>
+      <td>Connected</td>
+      <td id="time-${clientId}">Joined at: ${new Date(timestamp).toLocaleTimeString()}</td>
+      <td>
+        <button onclick="logoutClient('${clientId}')">Logout</button>
+      </td>
+    `;
+    tableBody.appendChild(row);
+  } else {
+    // If the row exists, just update the timestamp
+    const timeCell = row.querySelector(`#time-${clientId}`);
+    timeCell.textContent = `Joined at: ${new Date(timestamp).toLocaleTimeString()}`;
+  }
 }
 
-// Update user status when disconnected
+
 function updateUserStatus(clientId, status, duration) {
   const row = document.getElementById(`client-${clientId}`);
   if (row) {
@@ -71,39 +77,46 @@ function updateUserStatus(clientId, status, duration) {
     const timeCell = row.children[2];  // Connection time column
 
     statusCell.textContent = status;
-    timeCell.textContent = `Duration: ${duration}`;
+    timeCell.textContent = `Duration: ${formatDuration(duration)}`;
     row.style.backgroundColor = '#f8d7da'; // Optional: Highlight disconnected user row
   }
 }
 
+
 // Update the full client table (e.g., for periodic updates)
 function updateClientTable(clients) {
   const tableBody = document.getElementById('client-table-body');
-  tableBody.innerHTML = ''; // Clear the table before updating
-
+  
+  // We want to preserve the current rows and just update them
   clients.forEach((client) => {
-    const row = document.createElement('tr');
-    row.id = `client-${client.id}`;
+    let row = document.getElementById(`client-${client.clientId}`);
+    
+    // If the row doesn't exist, create a new one
+    if (!row) {
+      row = document.createElement('tr');
+      row.id = `client-${client.clientId}`;
+      tableBody.appendChild(row);
+    }
 
+    // Prepare the duration (if available)
     const duration = client.duration
       ? `Duration: ${formatDuration(client.duration)}`
       : 'Connected';
-
+    
     const status = client.status || 'Connected';
     const connectTime = client.connectTime
       ? new Date(client.connectTime).toLocaleTimeString()
       : 'Unknown';
 
+    // Update the row content
     row.innerHTML = `
-      <td>${client.id}</td>
+      <td>${client.clientId}</td>
       <td>${status}</td>
       <td>${duration}</td>
       <td>
-        <button onclick="logoutClient('${client.id}')">Logout</button>
+        <button onclick="logoutClient('${client.clientId}')">Logout</button>
       </td>
     `;
-
-    tableBody.appendChild(row);
   });
 }
 
