@@ -12,27 +12,37 @@ window.onload = () => {
     console.log('Received:', data);
 
     if (data.type === 'updateClients') {
-      const clientTable = document.querySelector('#client-table tbody');
-      clientTable.innerHTML = '';
-      
-      data.clients.forEach((client) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${client.id}</td>
-          <td>${client.status}</td>
-          <td>
-            <button onclick="logoutClient('${client.id}')">Logout</button>
-          </td>
-        `;
-        clientTable.appendChild(row);
-      });
+      // Update the client list on the renderer side
+      updateClientsTable(data.clients);
     }
   };
 
-  // Handle client logout
-  window.logoutClient = (clientId) => {
-    ws.send(JSON.stringify({ type: 'logout', clientId }));
-  };
+  // Update the client table with data from the server
+  function updateClientsTable(clients) {
+    const clientTable = document.querySelector('#client-table tbody');
+    clientTable.innerHTML = '';  // Clear existing rows
+
+    clients.forEach((client) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${client.id}</td>
+        <td>${client.status}</td>
+        <td>${client.connectTime ? `Connected for: ${formatDuration(client.connectTime)}` : 'N/A'}</td>
+      `;
+      clientTable.appendChild(row);
+    });
+  }
+
+  // Format duration in seconds to a readable format (e.g., "5 minutes", "2 hours")
+  function formatDuration(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (hours > 0) {
+      return `${hours} hours ${remainingMinutes} minutes`;
+    }
+    return `${minutes} minutes`;
+  }
 
   // Periodically request client updates from the server
   setInterval(() => {
