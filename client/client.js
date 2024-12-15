@@ -59,13 +59,3 @@ function disconnect() {
 window.onload = connect;
 
 
-document.getElementById('loginForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    if (username === 'client' && password === 'clien123') {
-        alert('Login successful!');
-    } else {
-        alert('Invalid credentials');
-    }
-});
