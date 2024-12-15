@@ -1,5 +1,5 @@
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ host: '0.0.0.0', port: 8080 });  // Listen on all network interfaces
+const wss = new WebSocket.Server({ host: '192.168.1.69', port: 8080 });  // Listen on all network interfaces
 
 wss.on('connection', (ws) => {
   console.log('A client connected');
