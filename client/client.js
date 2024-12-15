@@ -59,3 +59,41 @@ function disconnect() {
 window.onload = connect;
 
 
+const { app, BrowserWindow } = require('electron');
+
+let win;
+
+function createWindow() {
+  win = new BrowserWindow({
+    width: 300, // Width of the window
+    height: 200, // Height of the window
+    frame: false, // No window frame (you can customize the window look)
+    transparent: true, // Make the window transparent
+    alwaysOnTop: true, // Keep the window always on top
+    resizable: false, // Disable resizing the window
+    webPreferences: {
+      nodeIntegration: true, // Enable node integration if needed
+    },
+  });
+
+  win.loadFile('client-dashboard.html'); // Your client HTML file path
+
+  // Open DevTools if needed
+  // win.webContents.openDevTools();
+}
+
+app.whenReady().then(() => {
+  createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
