@@ -136,15 +136,14 @@ setInterval(() => {
 
 
 function updateUserStatus(clientId, status, duration) {
-    const row = document.getElementById(`client-${clientId}`);
-    if (row) {
-      const statusCell = row.children[1]; // Status column
-      const timeCell = row.children[2];  // Connection time column
-  
-      // Update the status and connection time
-      statusCell.textContent = status;
-      timeCell.textContent = `Duration: ${duration}`;
-      row.style.backgroundColor = '#f8d7da'; // Optional: Highlight disconnected user row
-    }
+  const row = document.getElementById(`client-${clientId}`);
+  if (row) {
+    const statusCell = row.children[1]; // Status column
+    const timeCell = row.children[2];  // Connection time column
+
+    // Update the status and connection time
+    statusCell.textContent = status;
+    timeCell.textContent = `Duration: ${duration}`;
+    row.style.backgroundColor = '#f8d7da'; // Optional: Highlight disconnected user row
   }
-  
+}

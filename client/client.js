@@ -55,50 +55,43 @@ function disconnect() {
   document.getElementById('status').textContent = 'Disconnected';
 }
 
-// Automatically attempt to connect on page load
-window.onload = connect;
-
 const { app, BrowserWindow } = require('electron');
+const path = require('path');
 
-let win;
+// Function to create the client window (small window)
+function createClientWindow() {
+    // Get the screen size to place the window at the bottom-right
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  
+    clientWindow = new BrowserWindow({
+      width: 250,  // Small window size for client
+      height: 150,  // Small window size for client
+      x: width - 250,  // Position it at the right
+      y: height - 150,  // Position it at the bottom
+      frame: false,  // Remove the frame
+      resizable: false,  // Prevent resizing
+      transparent: true,  // Optional transparency
+      alwaysOnTop: true,  // Keep it on top
+      webPreferences: {
+        nodeIntegration: true,
+        preload: path.join(__dirname, 'client/renderer.js')  // Path to client-side JS
+      }
+    });
+  
+    clientWindow.loadFile('client/client.html');  // Path to your client-side HTML
+    clientWindow.on('closed', () => {
+      clientWindow = null;
+    });
+  }
 
-function createWindow() {
-  // Get the screen size to position the window in the bottom-right corner
-  const { width, height } = require('electron').screen.getPrimaryDisplay().workAreaSize;
-
-  // Create the window
-  win = new BrowserWindow({
-    width: 300, // Set width of the window
-    height: 200, // Set height of the window
-    x: width - 320, // Position the window in the bottom-right corner (adjust for width)
-    y: height - 220, // Position the window in the bottom-right corner (adjust for height)
-    frame: false, // No window frame for a clean look
-    transparent: true, // Optional: make the window background transparent
-    alwaysOnTop: true, // Keep the window always on top
-    resizable: false, // Disable resizing
-    webPreferences: {
-      nodeIntegration: true, // Enable node integration if needed
-    },
-  });
-
-  win.loadFile('client-dashboard.html'); // Path to your client dashboard HTML file
-
-  // Optionally open DevTools
-  // win.webContents.openDevTools();
-}
-
-app.whenReady().then(() => {
-  createWindow();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
+app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
+
+
+// Automatically attempt to connect on page load
+window.onload = connect;
