@@ -14,3 +14,7 @@
         "concurrently": "^8.2.2"
     }
 }
+
+//npm init -y
+//npm install ws
+//node main.js

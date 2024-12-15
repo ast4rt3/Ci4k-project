@@ -1,6 +1,8 @@
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 
+let clients = {}; // Store connected clients
+
 wss.on('connection', (ws) => {
   console.log('A client connected'); // Log when a client connects
 
@@ -10,9 +12,7 @@ wss.on('connection', (ws) => {
 
     if (data.type === 'login') {
       const { username, password } = data;
-      
-      // Example logic for validating the client login (replace with actual logic)
-      const validCredentials = (username === 'validClientId' && password === 'validPassword'); // Change this to actual validation
+      const validCredentials = (username === 'validClientId' && password === 'validPassword');
 
       // Send login response back to the client
       ws.send(JSON.stringify({
@@ -21,19 +21,19 @@ wss.on('connection', (ws) => {
       }));
     }
 
-    if (data.type === 'logout') {
-      ws.send(JSON.stringify({ type: 'logout' }));
+    if (data.type === 'clientConnected') {
+      const { clientId } = data;
+      console.log(`${clientId} connected`);
+
+      // Store the connected client and broadcast to admin
+      clients[clientId] = { id: clientId, status: 'active' };
+
+      // Notify admin about the new connected client
+      broadcastToAdmin({ type: 'updateClients', clients: Object.values(clients) });
     }
 
-    if (data.type === 'updateClients') {
-      const clients = [
-        { id: 'client1', status: 'active' },
-        { id: 'client2', status: 'inactive' },
-      ];
-      ws.send(JSON.stringify({
-        type: 'updateClients',
-        clients,
-      }));
+    if (data.type === 'logout') {
+      ws.send(JSON.stringify({ type: 'logout' }));
     }
   });
 
@@ -42,3 +42,12 @@ wss.on('connection', (ws) => {
     console.log('A client disconnected');
   });
 });
+
+// Helper function to broadcast messages to the admin side
+function broadcastToAdmin(message) {
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(message));
+    }
+  });
+}
