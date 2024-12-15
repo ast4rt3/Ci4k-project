@@ -1,94 +1,54 @@
-// websocketServer/server.js
-const WebSocket = require('ws');
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./clients.db');  // Create or open a database file
-const wss = new WebSocket.Server({ host: '192.168.1.21', port: 8080 });
+let ws;
+let startTime;
+let timer;
+let connected = false;
 
-let connectedClients = {};  // Store connected clients temporarily
+// Function to start WebSocket connection
+function connect() {
+  ws = new WebSocket('ws://192.168.1.21:8080');  // Replace with your server's IP
 
-// Create the table if it doesn't exist already
-db.run(`
-  CREATE TABLE IF NOT EXISTS clients (
-    clientId TEXT PRIMARY KEY,
-    connectionTime INTEGER,
-    lastDisconnectTime INTEGER
-  );
-`);
+  ws.onopen = function() {
+    document.getElementById('status').textContent = 'Connected!';
+    connected = true;
+    startTime = Date.now();
+    startTrackingTime();
+  };
 
-wss.on('connection', (ws) => {
-  let clientId = null;
-  let connectionStartTime = Date.now();
+  ws.onclose = function() {
+    document.getElementById('status').textContent = 'Connection Lost!';
+    connected = false;
+    stopTrackingTime();
+  };
 
-  ws.on('message', (message) => {
-    const data = JSON.parse(message);
-    console.log('Received:', data);
-
-    if (data.type === 'clientConnect') {
-      clientId = data.clientId;
-      connectionStartTime = Date.now();
-
-      // Store client data in the database
-      db.run(
-        `INSERT OR REPLACE INTO clients (clientId, connectionTime, lastDisconnectTime)
-         VALUES (?, ?, ?)`,
-        [clientId, connectionStartTime, null],
-        (err) => {
-          if (err) {
-            console.error('Error inserting client data into database:', err);
-          }
-        }
-      );
-
-      // Notify admin about the new connection
-      broadcast({
-        type: 'newUser',
-        clientId: clientId,
-        timestamp: connectionStartTime,
-      });
-
-      // Store the connection time temporarily in memory
-      connectedClients[clientId] = connectionStartTime;
-    }
-  });
-
-  ws.on('close', () => {
-    if (clientId) {
-      const connectionDuration = (Date.now() - connectedClients[clientId]) / 1000;  // in seconds
-      console.log(`Client ${clientId} disconnected. Duration: ${connectionDuration} seconds`);
-
-      // Update the last disconnect time in the database
-      db.run(
-        `UPDATE clients
-         SET lastDisconnectTime = ?
-         WHERE clientId = ?`,
-        [Date.now(), clientId],
-        (err) => {
-          if (err) {
-            console.error('Error updating client disconnect time:', err);
-          }
-        }
-      );
-
-      // Notify admin about the disconnection
-      broadcast({
-        type: 'userDisconnected',
-        clientId: clientId,
-        duration: connectionDuration,
-      });
-
-      // Remove the client from the connected clients list
-      delete connectedClients[clientId];
-    }
-  });
-});
-
-// Broadcast messages to all clients (including admin)
-function broadcast(message) {
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(message));
-    }
-  });
+  ws.onerror = function(error) {
+    console.error('WebSocket error:', error);
+  };
 }
 
-console.log('WebSocket server running on ws://192.168.1.21:8080');
+// Function to track time
+function startTrackingTime() {
+  timer = setInterval(function() {
+    if (connected) {
+      let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+      document.getElementById('timeSpent').textContent = `Time Spent: ${elapsedTime}s`;
+    }
+  }, 1000);
+}
+
+// Function to stop time tracking
+function stopTrackingTime() {
+  clearInterval(timer);
+  document.getElementById('timeSpent').textContent = 'Time Spent: 0s';
+}
+
+// Function to disconnect WebSocket connection
+function disconnect() {
+  if (ws) {
+    ws.close();
+  }
+  stopTrackingTime();
+  document.getElementById('status').textContent = 'Disconnected';
+}
+
+// Automatically attempt to connect on page load
+window.onload = connect;

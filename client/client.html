@@ -2,17 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Client Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    #status {
+      font-size: 20px;
+      margin-top: 20px;
+    }
+    #timeSpent {
+      font-size: 18px;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Client Login</h1>
-  <form id="login-form">
-    <label for="username">Username:</label>
-    <input type="text" id="username" required />
-    <button type="submit">Login</button>
-  </form>
-  <p id="status"></p>
 
-  <script src="renderer.js"></script>
+  <h1>Client Dashboard</h1>
+  
+  <!-- Connection Status -->
+  <div id="status">Connecting...</div>
+  
+  <!-- Time Spent -->
+  <div id="timeSpent">Time Spent: 0s</div>
+  
+  <!-- Disconnect/Logout Button -->
+  <button id="disconnectBtn" onclick="disconnect()">Disconnect</button>
+  
+  <script src="client.js"></script>
 </body>
 </html>
