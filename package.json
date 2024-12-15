@@ -1,0 +1,5 @@
+"scripts": {
+  "start-server": "node websocketServer/main.js",
+  "start-electron": "npx electron .",
+  "start": "npm run start-server & npm run start-electron"
+}
