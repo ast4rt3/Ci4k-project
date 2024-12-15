@@ -64,21 +64,27 @@ const { app, BrowserWindow } = require('electron');
 let win;
 
 function createWindow() {
+  // Get the screen size to position the window in the bottom-right corner
+  const { width, height } = require('electron').screen.getPrimaryDisplay().workAreaSize;
+
+  // Create the window
   win = new BrowserWindow({
-    width: 300, // Width of the window
-    height: 200, // Height of the window
-    frame: false, // No window frame (you can customize the window look)
-    transparent: true, // Make the window transparent
+    width: 300, // Set width of the window
+    height: 200, // Set height of the window
+    x: width - 320, // Position the window in the bottom-right corner (adjust for width)
+    y: height - 220, // Position the window in the bottom-right corner (adjust for height)
+    frame: false, // No window frame for a clean look
+    transparent: true, // Optional: make the window background transparent
     alwaysOnTop: true, // Keep the window always on top
-    resizable: false, // Disable resizing the window
+    resizable: false, // Disable resizing
     webPreferences: {
       nodeIntegration: true, // Enable node integration if needed
     },
   });
 
-  win.loadFile('client-dashboard.html'); // Your client HTML file path
+  win.loadFile('client-dashboard.html'); // Path to your client dashboard HTML file
 
-  // Open DevTools if needed
+  // Optionally open DevTools
   // win.webContents.openDevTools();
 }
 
