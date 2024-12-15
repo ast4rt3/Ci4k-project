@@ -1,12 +1,19 @@
-window.onload = () => {
-  const ws = new WebSocket('ws://192.168.1.21:8080'); // Connect to the WebSocket server
+let ws;  // WebSocket variable
 
-  // Log WebSocket connection errors for debugging
-  ws.onerror = (error) => {
-    console.error('WebSocket Error:', error);
+// Function to create and manage WebSocket connection
+function connectWebSocket() {
+  ws = new WebSocket('ws://192.168.1.21:8080');  // Connect to the WebSocket server
+
+  ws.onopen = () => {
+    console.log('Connected to the WebSocket server');
+    document.getElementById('status').textContent = 'Connected successfully!';
   };
 
-  // Handle WebSocket messages
+  ws.onerror = (error) => {
+    console.error('WebSocket Error:', error);
+    document.getElementById('status').textContent = 'Connection failed';
+  };
+
   ws.onmessage = (message) => {
     const data = JSON.parse(message.data);
     console.log('Received:', data);
@@ -19,14 +26,22 @@ window.onload = () => {
         status.textContent = 'Login failed. Try again.';
       }
     }
-
-    if (data.type === 'logout') {
-      alert('You have been logged out.');
-      window.location.reload();
-    }
   };
 
-  // Handle the login form submission
+  ws.onclose = () => {
+    console.log('WebSocket connection closed. Reconnecting...');
+    document.getElementById('status').textContent = 'Disconnected. Reconnecting...';
+
+    // Try to reconnect after 3 seconds if the connection is lost
+    setTimeout(connectWebSocket, 3000);
+  };
+}
+
+// Initialize WebSocket connection
+window.onload = () => {
+  connectWebSocket();
+
+  // Handle login form submission
   const loginForm = document.getElementById('login-form');
   loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
