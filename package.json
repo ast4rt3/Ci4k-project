@@ -1,19 +1,19 @@
 {
     "name": "ci4k-project",
     "version": "1.0.0",
-    "description": "",
-    "main": "main.js",
+    "description": "Your Electron App",
+    "main": "main.js",  // Points to the main.js in the root folder
     "scripts": {
-      "start-server": "node websocketServer/main.js",
-      "start-electron": "npx electron .",
-      "start": "npm run start-server & npm run start-electron"
+      "start": "electron ."  // This starts the Electron app
+    },
+    "dependencies": {
+      // Add any runtime dependencies here
+    },
+    "devDependencies": {
+      "electron": "^latest-version"  // Ensure you have the correct version of Electron
     },
     "author": "",
-    "license": "ISC",
-    "dependencies": {
-      "ws": "^8.0.0",  // Ensure that ws package is listed as a dependency
-      "electron": "^25.0.0"  // Or whatever version you're using for Electron
-    }
+    "license": "ISC"
   }
   
 //npm init -y
