@@ -23,8 +23,9 @@ window.onload = () => {
     };
 
     window.logoutClient = (clientId) => {
-      window.api.send('forceLogout', clientId);
+      ws.send(JSON.stringify({ type: 'logout', clientId }));
     };
+
   } else if (document.title === 'Client Login') {
     const loginForm = document.getElementById('login-form');
     const status = document.getElementById('status');
@@ -33,16 +34,27 @@ window.onload = () => {
       e.preventDefault();
       const clientId = document.getElementById('username').value;
 
+      // Send login request
       ws.send(JSON.stringify({ type: 'login', clientId }));
-      status.textContent = 'Logged in successfully!';
-    });
 
-    ws.onmessage = (message) => {
-      const data = JSON.parse(message.data);
-      if (data.type === 'logout') {
-        alert('You have been logged out.');
-        window.location.reload();
-      }
-    };
+      // Waiting for the server's response to handle login success/failure
+      ws.onmessage = (message) => {
+        const data = JSON.parse(message.data);
+        if (data.type === 'loginResponse') {
+          if (data.success) {
+            status.textContent = 'Logged in successfully!';
+            // Optionally, redirect or update UI here
+          } else {
+            status.textContent = 'Login failed. Try again.';
+          }
+        }
+
+        // Handle logout response (if needed)
+        if (data.type === 'logout') {
+          alert('You have been logged out.');
+          window.location.reload();
+        }
+      };
+    });
   }
 };
