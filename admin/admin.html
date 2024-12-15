@@ -23,17 +23,17 @@
             border-radius: 5px;
             display: none;
         }
-        #client-table {
+        #client-table-body {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-        #client-table th, #client-table td {
+        #client-table-body th, #client-table-body td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: center;
         }
-        #client-table th {
+        #client-table-body th {
             background-color: #007bff;
             color: white;
         }
@@ -59,19 +59,16 @@
     <!-- Connected Clients -->
     <h2>Connected Clients</h2>
 
-
     <table id="client-table-body">
         <thead>
             <tr>
                 <th>Client ID</th>
                 <th>Status</th>
                 <th>Connection Time</th>
-                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-            </tr>
+            <!-- Dynamic rows will be inserted here -->
         </tbody>
     </table>
 

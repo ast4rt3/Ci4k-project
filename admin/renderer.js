@@ -27,7 +27,7 @@ window.onload = () => {
       row.innerHTML = `
         <td>${client.id}</td>
         <td>${client.status}</td>
-        <td>${client.connectTime ? `Connected for: ${formatDuration(client.connectTime)}` : 'N/A'}</td>
+        <td id="connect-time-${client.id}">${client.connectTime ? `Connected for: ${formatDuration(client.connectTime)}` : 'N/A'}</td>
       `;
       clientTable.appendChild(row);
     });
@@ -48,4 +48,33 @@ window.onload = () => {
   setInterval(() => {
     ws.send(JSON.stringify({ type: 'updateClients' }));
   }, 1000); // Update every second
+
+  // Function to update the countdown on the client table
+  function updateCountdown() {
+    const clients = document.querySelectorAll('#client-table tbody tr');
+    clients.forEach((row) => {
+      const connectTimeCell = row.querySelector('td:nth-child(3)');
+      if (connectTimeCell) {
+        const id = row.querySelector('td:first-child').textContent;
+        const client = getClientById(id);
+        if (client && client.connectTime) {
+          const elapsedTime = Math.floor((Date.now() - client.connectTime) / 1000);  // in seconds
+          connectTimeCell.textContent = `Connected for: ${formatDuration(elapsedTime)}`;
+        }
+      }
+    });
+  }
+
+  // Simulate fetching a client by ID (you can modify this to be real)
+  function getClientById(id) {
+    // This function is just for illustration purposes
+    // You can replace this with your actual logic of accessing client data
+    return {
+      id,
+      connectTime: Date.now() - (Math.floor(Math.random() * 10000)), // Random simulate connection time
+    };
+  }
+
+  // Update countdown every second
+  setInterval(updateCountdown, 1000);
 };
