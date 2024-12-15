@@ -6,15 +6,18 @@ wss.on('connection', (ws) => {
 
   ws.on('message', (message) => {
     const data = JSON.parse(message);
-    console.log('Received:', data);
+    console.log('Received:', data); // Debug log
 
     if (data.type === 'login') {
-      const isValidClient = (data.clientId === 'validClientId'); // Example logic for validating the client login
+      const { username, password } = data;
+      
+      // Example logic for validating the client login (replace with actual logic)
+      const validCredentials = (username === 'validClientId' && password === 'validPassword'); // Change this to actual validation
 
       // Send login response back to the client
       ws.send(JSON.stringify({
         type: 'loginResponse',
-        success: isValidClient,
+        success: validCredentials,
       }));
     }
 

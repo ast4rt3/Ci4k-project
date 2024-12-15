@@ -24,7 +24,7 @@ window.onload = () => {
       if (data.success) {
         status.textContent = 'Logged in successfully!';
       } else {
-        status.textContent = 'Login failed. Try again.';
+        status.textContent = 'Login failed. Invalid credentials.';
       }
     }
 
@@ -37,9 +37,10 @@ window.onload = () => {
   // Handle login form submission
   loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const clientId = document.getElementById('username').value;
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
 
     // Send login request to the WebSocket server
-    ws.send(JSON.stringify({ type: 'login', clientId }));
+    ws.send(JSON.stringify({ type: 'login', username, password }));
   });
 };
