@@ -1,39 +1,40 @@
 const WebSocket = require('ws');
-
 const wss = new WebSocket.Server({ port: 8080 });
 
-let clients = {};
-
 wss.on('connection', (ws) => {
-  ws.on('message', (data) => {
-    const message = JSON.parse(data);
+  console.log('A client connected');
 
-    if (message.type === 'login') {
-      // Register client
-      clients[message.clientId] = ws;
-      broadcastClients();
-    } else if (message.type === 'logout') {
-      // Remove client
-      delete clients[message.clientId];
-      broadcastClients();
+  ws.on('message', (message) => {
+    const data = JSON.parse(message);
+    console.log('Received:', data);
+
+    if (data.type === 'login') {
+      // Example logic for validating the client login
+      const isValidClient = (data.clientId === 'validClientId'); // Replace with actual logic
+
+      // Send login response back to the client
+      ws.send(JSON.stringify({
+        type: 'loginResponse',
+        success: isValidClient,
+      }));
+    }
+
+    if (data.type === 'logout') {
+      // Handle client logout logic here (e.g., session management)
+      ws.send(JSON.stringify({ type: 'logout' }));
+    }
+
+    if (data.type === 'updateClients') {
+      // Example update clients message
+      const clients = [
+        { id: 'client1', status: 'active' },
+        { id: 'client2', status: 'inactive' },
+      ];
+
+      ws.send(JSON.stringify({
+        type: 'updateClients',
+        clients,
+      }));
     }
   });
-
-  ws.on('close', () => {
-    // Remove disconnected clients
-    Object.keys(clients).forEach((id) => {
-      if (clients[id] === ws) delete clients[id];
-    });
-    broadcastClients();
-  });
 });
-
-// Send the list of connected clients to all admin clients
-function broadcastClients() {
-  const clientList = Object.keys(clients).map((id) => ({ id, status: 'active' }));
-  const payload = JSON.stringify({ type: 'updateClients', clients: clientList });
-
-  Object.values(clients).forEach((client) => {
-    client.send(payload);
-  });
-}
