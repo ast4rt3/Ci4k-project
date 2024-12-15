@@ -66,3 +66,12 @@ function formatDuration(seconds) {
   }
   return `${minutes} minutes`;
 }
+
+
+// admin.js
+fetch('http://localhost:3000/clients')
+  .then((response) => response.json())
+  .then((data) => {
+    console.log(data); // Display client data on the admin side
+  })
+  .catch((error) => console.error('Error fetching client data:', error));
