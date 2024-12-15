@@ -14,15 +14,15 @@ ws.onmessage = (message) => {
 
   if (data.type === 'newUser') {
     // A new user connected
-    showNotification(`New user connected: ${data.userId}`);
-    addUserToList(data.userId);
+    showNotification(`New user connected: ${data.clientId}`);
+    addUserToList(data.clientId);
   }
 
   if (data.type === 'userDisconnected') {
     // A user disconnected
     const duration = formatDuration(data.duration);
-    showNotification(`User ${data.userId} disconnected. Duration: ${duration}`);
-    removeUserFromList(data.userId);
+    showNotification(`User ${data.clientId} disconnected. Duration: ${duration}`);
+    removeUserFromList(data.clientId);
   }
 };
 
@@ -38,20 +38,20 @@ function showNotification(message) {
 }
 
 // Add a new user to the connected users list
-function addUserToList(userId) {
+function addUserToList(clientId) {
   const list = document.getElementById('connectedUsers');
   const listItem = document.createElement('li');
-  listItem.id = `user-${userId}`;
-  listItem.textContent = `${userId} (Connected)`;
+  listItem.id = `user-${clientId}`;
+  listItem.textContent = `${clientId} (Connected)`;
   list.appendChild(listItem);
 }
 
 // Remove a user from the list when they disconnect
-function removeUserFromList(userId) {
+function removeUserFromList(clientId) {
   const list = document.getElementById('connectedUsers');
-  const listItem = document.getElementById(`user-${userId}`);
+  const listItem = document.getElementById(`user-${clientId}`);
   if (listItem) {
-    listItem.textContent = `${userId} (Disconnected)`;
+    listItem.textContent = `${clientId} (Disconnected)`;
     listItem.style.textDecoration = 'line-through';  // Optional: Strike through disconnected user
   }
 }
