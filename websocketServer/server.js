@@ -15,6 +15,11 @@ db.run(`
   );
 `);
 
+// Function to generate a unique clientId
+function generateClientId() {
+  return 'client-' + Math.random().toString(36).substring(2, 15);  // Generates a random alphanumeric string
+}
+
 wss.on('connection', (ws) => {
   let clientId = null;
   let connectionStartTime = Date.now();
@@ -24,36 +29,62 @@ wss.on('connection', (ws) => {
     console.log('Received:', data);
 
     if (data.type === 'clientConnect') {
-      clientId = data.clientId;
+      clientId = data.clientId || generateClientId();  // If no clientId is provided, generate one
       connectionStartTime = Date.now();
 
-      // Store client data in the database
-      db.run(
-        `INSERT OR REPLACE INTO clients (clientId, connectionTime, lastDisconnectTime)
-         VALUES (?, ?, ?)`,
-        [clientId, connectionStartTime, null],
-        (err) => {
-          if (err) {
-            console.error('Error inserting client data into database:', err);
-          }
+      // Check if the client already exists in the database
+      db.get('SELECT * FROM clients WHERE clientId = ?', [clientId], (err, row) => {
+        if (err) {
+          console.error('Error fetching client data from database:', err);
+          return;
         }
-      );
 
-      // Notify admin about the new connection
+        if (row) {
+          // Client exists, so it's a reconnection
+          const previousConnectionTime = row.connectionTime;
+          const lastDisconnectTime = row.lastDisconnectTime;
+
+          // Notify the client with their previous data
+          ws.send(JSON.stringify({
+            type: 'reconnect',
+            clientId: clientId,
+            previousConnectionTime: previousConnectionTime,
+            lastDisconnectTime: lastDisconnectTime,
+          }));
+
+          console.log(`Client ${clientId} reconnected. Last disconnect was at ${lastDisconnectTime}`);
+        } else {
+          // New client, insert them into the database
+          db.run(
+            `INSERT INTO clients (clientId, connectionTime, lastDisconnectTime)
+             VALUES (?, ?, ?)`,
+            [clientId, connectionStartTime, null],
+            (err) => {
+              if (err) {
+                console.error('Error inserting new client into database:', err);
+              }
+            }
+          );
+
+          console.log(`New client connected: ${clientId}`);
+        }
+      });
+
+      // Store the connection time temporarily in memory
+      connectedClients[clientId] = { ws, connectionStartTime };
+
+      // Broadcast new user connection to all clients
       broadcast({
         type: 'newUser',
         clientId: clientId,
         timestamp: connectionStartTime,
       });
-
-      // Store the connection time temporarily in memory
-      connectedClients[clientId] = connectionStartTime;
     }
   });
 
   ws.on('close', () => {
     if (clientId) {
-      const connectionDuration = (Date.now() - connectedClients[clientId]) / 1000;  // in seconds
+      const connectionDuration = (Date.now() - connectedClients[clientId].connectionStartTime) / 1000;  // in seconds
       console.log(`Client ${clientId} disconnected. Duration: ${connectionDuration} seconds`);
 
       // Update the last disconnect time in the database
@@ -69,7 +100,7 @@ wss.on('connection', (ws) => {
         }
       );
 
-      // Notify admin about the disconnection
+      // Broadcast user disconnection to all clients
       broadcast({
         type: 'userDisconnected',
         clientId: clientId,
@@ -93,12 +124,12 @@ function broadcast(message) {
 
 console.log('WebSocket server running on ws://192.168.1.21:8080');
 
-
 // Add to your server.js file (optional API)
 const express = require('express');
 const app = express();
 const port = 3000;
 
+// API endpoint for viewing all connected clients
 app.get('/clients', (req, res) => {
   db.all('SELECT * FROM clients', [], (err, rows) => {
     if (err) {
@@ -111,49 +142,3 @@ app.get('/clients', (req, res) => {
 app.listen(port, () => {
   console.log(`Admin API running on http://localhost:${port}`);
 });
-
-ws.on('message', (message) => {
-    const data = JSON.parse(message);
-    console.log('Received:', data);
-  
-    if (data.type === 'logout') {
-      const clientIdToLogout = data.clientId;
-  
-      // Find the client WebSocket
-      const client = connectedClients[clientIdToLogout];
-      if (client) {
-        const { ws: clientWs, connectionStartTime } = client;
-        const connectionDuration = (Date.now() - connectionStartTime) / 1000; // in seconds
-  
-        // Close the WebSocket connection
-        clientWs.close();
-        console.log(`Client ${clientIdToLogout} forcefully disconnected`);
-  
-        // Update the database with disconnection time
-        db.run(
-          `UPDATE clients
-           SET lastDisconnectTime = ?
-           WHERE clientId = ?`,
-          [Date.now(), clientIdToLogout],
-          (err) => {
-            if (err) {
-              console.error('Error updating client disconnect time:', err);
-            }
-          }
-        );
-  
-        // Notify all admin dashboards about the disconnection
-        broadcast({
-          type: 'userDisconnected',
-          clientId: clientIdToLogout,
-          duration: connectionDuration,
-        });
-  
-        // Remove the client from the connected clients list
-        delete connectedClients[clientIdToLogout];
-      } else {
-        console.log(`No active connection found for client: ${clientIdToLogout}`);
-      }
-    }
-  });
-  

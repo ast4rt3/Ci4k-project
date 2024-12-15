@@ -1,77 +1,47 @@
 let ws;
-let startTime;
-let timer;
+let clientId = localStorage.getItem('clientId') || generateClientId(); // Use stored clientId or generate a new one
 let connected = false;
 
-// Function to start WebSocket connection
+function generateClientId() {
+  const newClientId = 'client-' + Math.random().toString(36).substring(2, 15);
+  localStorage.setItem('clientId', newClientId);
+  return newClientId;
+}
+
 function connect() {
-  ws = new WebSocket('ws://192.168.1.21:8080');  // Connect to WebSocket server
+  ws = new WebSocket('ws://192.168.1.21:8080');
 
   ws.onopen = () => {
-    document.getElementById('status').textContent = 'Connected!';
+    console.log('Connected to server');
     connected = true;
-    startTime = Date.now();
-    startTrackingTime();
+    ws.send(JSON.stringify({ type: 'clientConnect', clientId: clientId }));
+  };
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'reconnect') {
+      console.log('Reconnected!');
+      console.log('Previous connection time:', new Date(data.previousConnectionTime));
+      console.log('Last disconnect time:', new Date(data.lastDisconnectTime));
+    }
+
+    if (data.type === 'newUser') {
+      console.log('New user connected:', data.clientId);
+    }
+
+    if (data.type === 'userDisconnected') {
+      console.log('User disconnected:', data.clientId);
+    }
   };
 
   ws.onclose = () => {
-    document.getElementById('status').textContent = 'Connection Lost!';
+    console.log('Disconnected');
     connected = false;
-    stopTrackingTime();
   };
 
   ws.onerror = (error) => {
     console.error('WebSocket error:', error);
-    document.getElementById('status').textContent = 'Connection failed';
   };
 }
 
-// Function to track time spent
-function startTrackingTime() {
-  timer = setInterval(() => {
-    if (connected) {
-      let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-      document.getElementById('timeSpent').textContent = `Time Spent: ${elapsedTime}s`;
-
-      // Send the time spent to the server
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'timeUpdate', timeSpent: elapsedTime }));
-      }
-    }
-  }, 1000);
-}
-
-// Function to stop time tracking
-function stopTrackingTime() {
-  clearInterval(timer);
-  document.getElementById('timeSpent').textContent = 'Time Spent: 0s';
-}
-
-// Function to disconnect WebSocket connection
-function disconnect() {
-  if (ws) {
-    ws.close();
-  }
-  stopTrackingTime();
-  document.getElementById('status').textContent = 'Disconnected';
-}
-
-// Automatically attempt to connect on page load
-window.onload = () => {
-  connect();
-
-  // Handle login form submission (if there's a login form in the HTML)
-  const loginForm = document.getElementById('login-form');
-  if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const clientId = document.getElementById('username').value;
-
-      // Send login request to the server
-      ws.send(JSON.stringify({
-        type: 'login',
-        clientId: clientId,
-      }));
-    });
-  }
-};
+connect();
