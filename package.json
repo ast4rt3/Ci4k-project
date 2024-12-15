@@ -1,5 +1,15 @@
-"scripts": {
-  "start-server": "node websocketServer/main.js",
-  "start-electron": "npx electron .",
-  "start": "npm run start-server & npm run start-electron"
-}
+{
+    "name": "ci4k-project",
+    "version": "1.0.0",
+    "description": "",
+    "main": "main.js",
+    "scripts": {
+      "start-server": "node websocketServer/main.js",
+      "start-electron": "npx electron .",
+      "start": "npm run start-server & npm run start-electron"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {}
+  }
+  
