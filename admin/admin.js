@@ -21,9 +21,9 @@ ws.onmessage = (message) => {
 
   if (data.type === 'userDisconnected') {
     // A user disconnected
-    const duration = formatDuration(data.duration);
+    const duration = formatDuration(data.duration / 1000); // Convert ms to seconds
     showNotification(`User ${data.clientId} disconnected. Duration: ${duration}`);
-    updateUserStatus(data.clientId, 'Disconnected', duration);
+    updateUserStatus(data.clientId, 'Disconnected', duration, data.disconnectTime);
   }
 };
 
@@ -49,8 +49,9 @@ function addUserToTable(clientId, timestamp) {
 
   row.innerHTML = `
     <td>${clientId}</td>
-    <td>Connected</td>
-    <td id="time-${clientId}">Joined at: ${connectTime}</td>
+    <td id="status-${clientId}">Connected</td>
+    <td id="connect-time-${clientId}">${connectTime}</td>
+    <td id="disconnect-time-${clientId}">-</td>
     <td>
       <button onclick="logoutClient('${clientId}')">Logout</button>
     </td>
@@ -60,14 +61,24 @@ function addUserToTable(clientId, timestamp) {
 }
 
 // Update user status when disconnected
-function updateUserStatus(clientId, status, duration) {
+function updateUserStatus(clientId, status, duration, disconnectTimestamp) {
   const row = document.getElementById(`client-${clientId}`);
   if (row) {
-    const statusCell = row.children[1]; // Status column
-    const timeCell = row.children[2];  // Connection time column
+    const statusCell = document.getElementById(`status-${clientId}`);
+    const disconnectTimeCell = document.getElementById(`disconnect-time-${clientId}`);
 
     statusCell.textContent = status;
-    timeCell.textContent = `Duration: ${duration}`;
+
+    if (status === 'Disconnected') {
+      // Ensure disconnectTimestamp is valid
+      if (disconnectTimestamp && !isNaN(new Date(disconnectTimestamp))) {
+        const disconnectTime = new Date(disconnectTimestamp).toLocaleTimeString();
+        disconnectTimeCell.textContent = disconnectTime;
+      } else {
+        disconnectTimeCell.textContent = 'Invalid Time'; // Handle invalid/missing disconnect time
+      }
+    }
+
     row.style.backgroundColor = '#f8d7da'; // Optional: Highlight disconnected user row
   }
 }
@@ -101,10 +112,18 @@ document.getElementById('deleteButton').addEventListener('click', () => {
   })
     .then((response) => response.text())
     .then((message) => {
-      showNotification(message);  // Show a success message in the notification area
+      showNotification(message); // Show a success message in the notification area
     })
     .catch((error) => {
       console.error('Error deleting all tables:', error);
       showNotification('Failed to delete tables');
     });
 });
+
+// Adjusted for real-time sync of client counters
+function refreshClientTable() {
+  ws.send(JSON.stringify({ type: 'fetchClients' })); // Request updated client list
+}
+
+// Periodic refresh of the client table
+setInterval(refreshClientTable, 5000);

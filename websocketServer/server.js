@@ -1,6 +1,12 @@
 const WebSocket = require('ws');
 const mysql = require('mysql2');
 const { v4: uuidv4 } = require('uuid');  // Import UUID
+const express = require('express');
+const bodyParser = require('body-parser'); // Import body-parser
+
+const app = express();
+const port = 3000;
+
 const wss = new WebSocket.Server({ host: '192.168.1.21', port: 8080 });
 
 // MySQL database connection
@@ -19,6 +25,9 @@ db.connect((err) => {
     console.log('Connected to MySQL database `ci4k-project`');
   }
 });
+
+// Middleware for parsing JSON bodies
+app.use(bodyParser.json());
 
 // WebSocket server logic
 wss.on('connection', (ws) => {
@@ -106,13 +115,6 @@ function broadcast(message) {
   });
 }
 
-console.log('WebSocket server running on ws://192.168.1.21:8080');
-
-// Admin API to delete all tables (if needed)
-const express = require('express');
-const app = express();
-const port = 3000;
-
 // Endpoint to delete all tables in the database
 app.get('/deleteAllTables', (req, res) => {
   deleteAllTables(); // Call the function to delete all tables
@@ -122,3 +124,69 @@ app.get('/deleteAllTables', (req, res) => {
 app.listen(port, () => {
   console.log(`Admin API running on http://localhost:${port}`);
 });
+
+// Function to delete all records in the `clients` table
+function deleteAllTables() {
+  const deleteQuery = `TRUNCATE TABLE clients`;
+
+  db.query(deleteQuery, (err, result) => {
+    if (err) {
+      console.error('Error deleting all tables:', err);
+    } else {
+      console.log('All tables successfully reset.');
+    }
+  });
+}
+
+// Handle server shutdown to reset the database
+function handleShutdown() {
+  console.log('Server is shutting down... Resetting the database.');
+
+  deleteAllTables();
+
+  db.end((err) => {
+    if (err) {
+      console.error('Error closing the database connection:', err);
+    } else {
+      console.log('Database connection closed.');
+    }
+    process.exit(0);
+  });
+}
+
+// Signup route
+app.post('/signup', (req, res) => {
+  const { username, full_name, email, department } = req.body;
+
+  if (!username || !full_name || !email || !department) {
+    return res.status(400).send('Missing required fields');
+  }
+
+  const insertQuery = `
+    INSERT INTO User (username, full_name, email, department)
+    VALUES (?, ?, ?, ?)
+  `;
+
+  db.query(insertQuery, [username, full_name, email, department], (err, result) => {
+    if (err) {
+      console.error('Error inserting user:', err);
+      return res.status(500).send('Error signing up');
+    } else {
+      console.log('User signed up successfully');
+      res.send('Signup successful');
+    }
+  });
+});
+
+// Login route (optional, for reference)
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  // Validate login credentials (implement password handling as needed)
+  res.send('Login not yet implemented');
+});
+
+// Listen for process termination signals
+process.on('SIGINT', handleShutdown);
+process.on('SIGTERM', handleShutdown);
+
+console.log('WebSocket server running on ws://192.168.1.21:8080');
