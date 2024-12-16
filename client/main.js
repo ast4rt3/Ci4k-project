@@ -87,8 +87,12 @@ app.on('ready', () => {
       },
     },
     {
-      label: 'Quit',
-      click: () => app.quit(),
+      label: 'Exit',
+      click: () => {
+        console.log('Exiting the application...');
+        app.quit();  // Quit Electron
+        process.exit(0);  // Force Node.js to exit the process immediately
+      },
     },
   ]);
 
@@ -98,4 +102,5 @@ app.on('ready', () => {
 
 app.on('window-all-closed', () => {
   // Do not quit the app when all windows are closed
+  // Do nothing here so it keeps running until the user explicitly quits
 });
