@@ -40,19 +40,31 @@
         button:hover {
             background-color: #45a049;
         }
+
+
+ 
     </style>
 </head>
 <body>
-
-    <div class="login-form">
+    <div class="container">
+      <!-- Login Form -->
+      <div class="form-container" id="login-form">
         <h2>Login</h2>
-        <form id="loginForm">
-            <input type="text" id="username" placeholder="Username" required />
-            <input type="password" id="password" placeholder="Password" required />
-            <button type="submit">Login</button>
+        <form action="/login" method="POST">
+          <label for="login-username">Username:</label>
+          <input type="text" id="login-username" name="username" required>
+          
+          <label for="login-password">Password:</label>
+          <input type="password" id="login-password" name="password" required>
+          
+          <button type="submit">Login</button>
         </form>
+        <a href="signup.html" style="color: blue; text-decoration: underline;">Sign Up</a>
+      </div>
+  
+      <hr>
+  
+     
     </div>
-
-    <script src="login.js"></script>
-</body>
-</html>
+  </body>
+  </html>
