@@ -14,7 +14,7 @@ const db = mysql.createConnection({
   host: 'localhost',  // localhost if you're running MySQL locally
   user: 'root',  // MySQL username (default is 'root')
   password: '',  // MySQL password (if no password, leave empty; otherwise, enter your MySQL password)
-  database: 'ci4k-project'  // The name of your database
+  database: 'ci4k-project',  // The name of your database
 });
 
 // Connect to the database
@@ -37,17 +37,9 @@ wss.on('connection', (ws) => {
   // Send the generated clientId to the client
   ws.send(JSON.stringify({ type: 'clientConnect', clientId }));
 
-  // Insert client connection data into the existing `clients` table
-  insertClientData(clientId, connectionStartTime);
+  // Log student login (use studentID and computer number)
+  logStudentLogin(clientId, 1);  // Example: student logs into computer 1
 
-  // Notify admin about the new connection
-  broadcast({
-    type: 'newUser',
-    clientId: clientId,
-    connectTime: connectionStartTime,
-  });
-
-  // Handle WebSocket messages
   ws.on('message', (message) => {
     const data = JSON.parse(message);
     console.log('Received:', data);
@@ -56,7 +48,7 @@ wss.on('connection', (ws) => {
       const clientIdToLogout = data.clientId;
 
       // Handle client logout
-      logoutClient(clientIdToLogout);
+      logStudentLogout(clientIdToLogout, 1);  // Example: student logs out from computer 1
     }
   });
 
@@ -69,6 +61,9 @@ wss.on('connection', (ws) => {
       type: 'userDisconnected',
       clientId: clientId,
     });
+
+    // Log student logout when the WebSocket connection is closed
+    logStudentLogout(clientId, 1);  // Example: student logs out from computer 1
   });
 });
 
@@ -115,7 +110,44 @@ function broadcast(message) {
   });
 }
 
-// Endpoint to delete all tables in the database
+// Function to log student login in the `lab_logs` table
+function logStudentLogin(studentID, computerNumber) {
+  const insertQuery = `
+    INSERT INTO lab_logs (studentID, computer_number, login_time)
+    VALUES (?, ?, ?)
+  `;
+
+  const loginTime = new Date();
+
+  db.query(insertQuery, [studentID, computerNumber, loginTime], (err, result) => {
+    if (err) {
+      console.error('Error logging student login:', err);
+    } else {
+      console.log(`Student ${studentID} logged into computer ${computerNumber}`);
+    }
+  });
+}
+
+// Function to log student logout and update the logout time in the `lab_logs` table
+function logStudentLogout(studentID, computerNumber) {
+  const updateQuery = `
+    UPDATE lab_logs
+    SET logout_time = ?, duration = TIMESTAMPDIFF(SECOND, login_time, ?)
+    WHERE studentID = ? AND computer_number = ? AND logout_time IS NULL
+  `;
+
+  const logoutTime = new Date();
+
+  db.query(updateQuery, [logoutTime, logoutTime, studentID, computerNumber], (err, result) => {
+    if (err) {
+      console.error('Error logging student logout:', err);
+    } else {
+      console.log(`Student ${studentID} logged out from computer ${computerNumber}`);
+    }
+  });
+}
+
+// Endpoint to delete all records in the `clients` table
 app.get('/deleteAllTables', (req, res) => {
   deleteAllTables(); // Call the function to delete all tables
   res.send('All tables have been deleted');
@@ -156,18 +188,18 @@ function handleShutdown() {
 
 // Signup route
 app.post('/signup', (req, res) => {
-  const { username, full_name, email, department } = req.body;
+  const { studentID, full_name, email, department } = req.body;
 
-  if (!username || !full_name || !email || !department) {
+  if (!studentID || !full_name || !email || !department) {
     return res.status(400).send('Missing required fields');
   }
 
   const insertQuery = `
-    INSERT INTO User (username, full_name, email, department)
+    INSERT INTO users (studentID, full_name, email, department)
     VALUES (?, ?, ?, ?)
   `;
 
-  db.query(insertQuery, [username, full_name, email, department], (err, result) => {
+  db.query(insertQuery, [studentID, full_name, email, department], (err, result) => {
     if (err) {
       console.error('Error inserting user:', err);
       return res.status(500).send('Error signing up');
