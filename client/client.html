@@ -7,20 +7,17 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      position: fixed;
-      bottom: 0;
-      right: 0;
-      width: 250px; /* Same as the width in Electron window */
-      height: 150px; /* Same as the height in Electron window */
-      background-color: rgba(255, 255, 255, 0.9);  /* Semi-transparent background */
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      margin: 0; /* Ensure no content is clipped */
+      padding: 0; /* Ensure no padding affects visibility */
+      width: 100%; /* Match window dimensions */
+      height: 100%; /* Match window dimensions */
+      display: flex;
+      flex-direction: column;
+      justify-content: center; /* Center content vertically */
+      align-items: center; /* Center content horizontally */
+      background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
       font-size: 14px;
       text-align: center;
-      z-index: 9999;
-      padding: 10px;
     }
 
     h1 {
@@ -28,24 +25,17 @@
       margin-bottom: 10px;
     }
 
-    #status {
+    #status, #timeSpent {
       font-size: 14px;
-      margin-top: 10px;
-    }
-
-    #timeSpent {
-      font-size: 14px;
-      margin-top: 10px;
+      margin-top: 5px;
     }
   </style>
 </head>
 <body>
-  <div class="dashboard">
+  <div>
     <h1>Client Dashboard</h1>
-    
     <!-- Connection Status -->
     <div id="status">Connecting...</div>
-    
     <!-- Time Spent -->
     <div id="timeSpent">Time Spent: 0s</div>
   </div>
