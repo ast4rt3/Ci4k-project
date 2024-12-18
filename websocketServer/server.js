@@ -31,50 +31,88 @@ app.use(bodyParser.json());
 
 // WebSocket server logic
 wss.on('connection', (ws) => {
+  console.log("A new connection was made");
+
   let clientId = uuidv4();  // Generate a new unique ID for the client
   let connectionStartTime = Date.now();
+  let isAdmin = false;
 
-  // Send the generated clientId to the client
-  ws.send(JSON.stringify({ type: 'clientConnect', clientId }));
+  // Log the initial connection (this confirms the connection is being made)
+  console.log('New WebSocket connection established with client:', clientId);
 
-  // Log student login (use studentID and computer number)
-  logStudentLogin(clientId, 1);  // Example: student logs into computer 1
+  // Insert client data into the database
+  insertClientData(clientId, connectionStartTime, isAdmin);
 
+  // Handle incoming messages
   ws.on('message', (message) => {
     const data = JSON.parse(message);
-    console.log('Received:', data);
+    console.log('Received message:', data);
+
+    if (data.type === 'adminConnect') {
+      isAdmin = true;
+      console.log('Admin connected');
+      // Log admin login in the database
+      logAdminLogin(clientId);
+      ws.send(JSON.stringify({ type: 'adminConnected', clientId }));
+    } else if (data.type === 'clientConnect') {
+      console.log('Client connected');
+      // Log client connection in the database
+      logStudentLogin(clientId, 1);  // Example: student logs into computer 1
+
+      // Notify the admin about the new client connection
+      broadcast({
+        type: 'clientConnected',
+        clientId,
+        computerNumber: 1, // Example data
+      });
+    }
 
     if (data.type === 'logout') {
       const clientIdToLogout = data.clientId;
 
       // Handle client logout
       logStudentLogout(clientIdToLogout, 1);  // Example: student logs out from computer 1
+
+      // Notify the admin about the client logout
+      broadcast({
+        type: 'clientDisconnected',
+        clientId: clientIdToLogout,
+      });
     }
   });
 
+  // When connection is closed, log it
   ws.on('close', () => {
-    // Update the last disconnect time in the `clients` table
-    updateDisconnectTime(clientId);
-
-    // Notify admin about the disconnection
+    console.log('WebSocket connection closed for client:', clientId);
+    updateDisconnectTime(clientId, isAdmin);
     broadcast({
       type: 'userDisconnected',
       clientId: clientId,
     });
 
-    // Log student logout when the WebSocket connection is closed
-    logStudentLogout(clientId, 1);  // Example: student logs out from computer 1
+    if (!isAdmin) {
+      logStudentLogout(clientId, 1);  // Example: student logs out from computer 1
+    }
   });
+
+  // WebSocket error handling
+  ws.on('error', (err) => {
+    console.error('WebSocket error:', err);
+  });
+
+  // Send the generated clientId to the client
+  ws.send(JSON.stringify({ type: 'clientConnect', clientId }));
 });
 
 // Function to insert client connection data into the `clients` table
-function insertClientData(clientId, connectionStartTime) {
+function insertClientData(clientId, connectionStartTime, isAdmin) {
+  const status = isAdmin ? 'Admin Connected' : 'Client Connected';
   const insertDataQuery = `
     INSERT INTO clients (client_id, status, connect_time)
-    VALUES (?, 'Connected', ?)
+    VALUES (?, ?, ?)
   `;
 
-  db.query(insertDataQuery, [clientId, connectionStartTime], (err, result) => {
+  db.query(insertDataQuery, [clientId, status, connectionStartTime], (err, result) => {
     if (err) {
       console.error('Error inserting client data into the clients table:', err);
     } else {
@@ -84,7 +122,7 @@ function insertClientData(clientId, connectionStartTime) {
 }
 
 // Function to update the disconnect time for the client in the `clients` table
-function updateDisconnectTime(clientId) {
+function updateDisconnectTime(clientId, isAdmin) {
   const disconnectTime = Date.now();
   const updateQuery = `
     UPDATE clients
@@ -96,7 +134,7 @@ function updateDisconnectTime(clientId) {
     if (err) {
       console.error('Error updating disconnect time in clients table:', err);
     } else {
-      console.log(`Disconnect time updated for client: ${clientId}`);
+      console.log(`Disconnect time updated for ${isAdmin ? 'admin' : 'client'}: ${clientId}`);
     }
   });
 }
@@ -106,6 +144,24 @@ function broadcast(message) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(message));
+    }
+  });
+}
+
+// Function to log admin login in the `admin_logs` table
+function logAdminLogin(adminId) {
+  const insertQuery = `
+    INSERT INTO admin_logs (admin_id, login_time)
+    VALUES (?, ?)
+  `;
+
+  const loginTime = new Date();
+
+  db.query(insertQuery, [adminId, loginTime], (err, result) => {
+    if (err) {
+      console.error('Error logging admin login:', err);
+    } else {
+      console.log(`Admin ${adminId} logged in`);
     }
   });
 }
@@ -208,13 +264,6 @@ app.post('/signup', (req, res) => {
       res.send('Signup successful');
     }
   });
-});
-
-// Login route (optional, for reference)
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  // Validate login credentials (implement password handling as needed)
-  res.send('Login not yet implemented');
 });
 
 // Listen for process termination signals
