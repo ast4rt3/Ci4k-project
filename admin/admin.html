@@ -1,79 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            text-align: center;
-        }
-        #notification {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            display: none;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #007bff;
-            color: white;
-        }
-        button {
-            padding: 5px 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <style>
+    /* Basic styles for header and buttons */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+
+    #header {
+      background-color: #007bff;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    #buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .window-button {
+      width: 20px;
+      height: 20px;
+      background-color: #fff;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .close {
+      background-color: #ff4d4d;
+    }
+
+    .minimize {
+      background-color: #ffcc00;
+    }
+
+    .window-button:hover {
+      opacity: 0.8;
+    }
+
+    /* Basic table styles */
+    table {
+      width: 100%;
+      margin: 20px 0;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    #notification {
+      padding: 10px;
+      background-color: #ffcc00;
+      color: white;
+      display: none;
+    }
+  </style>
 </head>
 <body>
+  <div id="header">
     <h1>Admin Dashboard</h1>
+    <div id="buttons">
+      <button class="window-button minimize" onclick="minimizeWindow()"></button>
+      <button class="window-button close" onclick="closeWindow()"></button>
+    </div>
+  </div>
 
-    <!-- Notifications -->
-    <div id="notification">Notification messages appear here...</div>
-
-    <!-- Connected Clients -->
-    <h2>Connected Clients</h2>
-
+  <div id="content">
+    <div id="notification">Notifications will appear here.</div>
     <table>
-        <thead>
-            <tr>
-                <th>Client ID</th>
-                <th>Status</th>
-                <th>Connect Time</th>
-                <th>Disconnect Time</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="client-table-body">
-            <!-- Dynamic rows will be inserted here -->
-        </tbody>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Student ID</th>
+          <th>Computer Number</th>
+          <th>Login Time</th>
+          <th>Logout Time</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody id="client-table-body">
+        <!-- Dynamic rows will be inserted here -->
+      </tbody>
     </table>
+  </div>
 
-    <script src="admin.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>

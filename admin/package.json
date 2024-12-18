@@ -1,0 +1,38 @@
+{
+    "name": "Ci4K-admin",
+    "version": "1.0.0",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "build": "electron-builder --publish never"
+    },
+    "devDependencies": {
+        "electron": "^33.2.1",
+        "electron-builder": "^25.1.8"
+    },
+    "build": {
+        "productName": "Admin Dashboard",
+        "appId": "com.ci4k.admin",
+        "files": [
+            "main.js",
+            "package.json",
+            "admin.html",
+            "admin.js",
+            "egg.ico"
+        ],
+        "extraResources": [
+            {
+                "from": "C:\\Users\\law\\Documents\\Moonless_Project\\Ci4k-project\\admin\\admin.html",
+                "to": "admin/admin.html"
+            },
+            {
+                "from": "C:\\Users\\law\\Documents\\Moonless_Project\\Ci4k-project\\admin\\egg.ico",
+                "to": "resources/egg.ico"
+            }
+        ],
+        "win": {
+            "target": "nsis",
+            "icon": "admin/egg.ico"
+        }
+    }
+}

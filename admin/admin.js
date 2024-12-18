@@ -1,129 +1,76 @@
-// admin.js
-const ws = new WebSocket('ws://192.168.1.21:8080'); // WebSocket server connection
+const { ipcRenderer } = require('electron'); // Electron IPC for window controls
 
-ws.onopen = () => {
-  console.log('Connected to WebSocket server');
-};
-
-ws.onerror = (error) => {
-  console.error('WebSocket Error:', error);
-};
-
-ws.onmessage = (message) => {
-  const data = JSON.parse(message.data);
-  console.log('Received:', data);
-
-  if (data.type === 'newUser') {
-    // A new user connected
-    showNotification(`New user connected: ${data.clientId}`);
-    addUserToTable(data.clientId, data.connectTime); // Add user details to the table
-  }
-
-  if (data.type === 'userDisconnected') {
-    // A user disconnected
-    const duration = formatDuration(data.duration / 1000); // Convert ms to seconds
-    showNotification(`User ${data.clientId} disconnected. Duration: ${duration}`);
-    updateUserStatus(data.clientId, 'Disconnected', duration, data.disconnectTime);
-  }
-};
-
-// Display a notification on the admin dashboard
-function showNotification(message) {
-  const notification = document.getElementById('notification');
-  notification.textContent = message;
-  notification.style.display = 'block';
-
-  setTimeout(() => {
-    notification.style.display = 'none';
-  }, 5000); // Hide notification after 5 seconds
-}
-
-// Add a connected client to the table
-function addUserToTable(clientId, timestamp) {
-  const tableBody = document.getElementById('client-table-body');
-  const row = document.createElement('tr');
-  row.id = `client-${clientId}`;
-
-  // Convert timestamp to readable time
-  const connectTime = new Date(timestamp).toLocaleTimeString();
-
-  row.innerHTML = `
-    <td>${clientId}</td>
-    <td id="status-${clientId}">Connected</td>
-    <td id="connect-time-${clientId}">${connectTime}</td>
-    <td id="disconnect-time-${clientId}">-</td>
-    <td>
-      <button onclick="logoutClient('${clientId}')">Logout</button>
-    </td>
-  `;
-
-  tableBody.appendChild(row);
-}
-
-// Update user status when disconnected
-function updateUserStatus(clientId, status, duration, disconnectTimestamp) {
-  const row = document.getElementById(`client-${clientId}`);
-  if (row) {
-    const statusCell = document.getElementById(`status-${clientId}`);
-    const disconnectTimeCell = document.getElementById(`disconnect-time-${clientId}`);
-
-    statusCell.textContent = status;
-
-    if (status === 'Disconnected') {
-      // Ensure disconnectTimestamp is valid
-      if (disconnectTimestamp && !isNaN(new Date(disconnectTimestamp))) {
-        const disconnectTime = new Date(disconnectTimestamp).toLocaleTimeString();
-        disconnectTimeCell.textContent = disconnectTime;
-      } else {
-        disconnectTimeCell.textContent = 'Invalid Time'; // Handle invalid/missing disconnect time
+// Function to fetch lab logs from the server
+function fetchLabLogs() {
+  fetch('http://192.168.1.21:8080/lab_logs') // Updated API endpoint
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
-    }
-
-    row.style.backgroundColor = '#f8d7da'; // Optional: Highlight disconnected user row
-  }
-}
-
-// Format duration in seconds to a readable format
-function formatDuration(seconds) {
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  const remainingSeconds = seconds % 60;
-
-  if (hours > 0) {
-    return `${hours}h ${remainingMinutes}m ${remainingSeconds}s`;
-  }
-  if (minutes > 0) {
-    return `${minutes}m ${remainingSeconds}s`;
-  }
-  return `${remainingSeconds}s`;
-}
-
-// Logout a client
-function logoutClient(clientId) {
-  ws.send(JSON.stringify({ type: 'logout', clientId }));
-  console.log(`Logout request sent for client: ${clientId}`);
-}
-
-// Send a request to delete all tables when the button is clicked
-document.getElementById('deleteButton').addEventListener('click', () => {
-  fetch('http://localhost:3000/deleteAllTables', {
-    method: 'GET',
-  })
-    .then((response) => response.text())
-    .then((message) => {
-      showNotification(message); // Show a success message in the notification area
+      return response.json();
     })
-    .catch((error) => {
-      console.error('Error deleting all tables:', error);
-      showNotification('Failed to delete tables');
-    });
-});
-
-// Adjusted for real-time sync of client counters
-function refreshClientTable() {
-  ws.send(JSON.stringify({ type: 'fetchClients' })); // Request updated client list
+    .then((logs) => {
+      updateTable(logs); // Pass data to table update function
+    })
+    .catch((error) => console.error('Error fetching lab logs:', error));
 }
 
-// Periodic refresh of the client table
-setInterval(refreshClientTable, 5000);
+// Function to update the table with fetched data
+function updateTable(logs) {
+  const tableBody = document.getElementById('client-table-body');
+  if (!tableBody) {
+    console.error('Table body element not found!');
+    return;
+  }
+
+  tableBody.innerHTML = ''; // Clear existing rows before inserting new ones
+
+  logs.forEach((log) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${log.id || '-'}</td>
+      <td>${log.studentID || '-'}</td>
+      <td>${log.computer_number || '-'}</td>
+      <td>${formatTime(log.login_time)}</td>
+      <td>${formatTime(log.logout_time)}</td>
+      <td>${formatDuration(log.duration)}</td>
+    `;
+    tableBody.appendChild(row); // Append the row to the table body
+  });
+}
+
+// Helper function to format time
+function formatTime(time) {
+  if (!time || isNaN(new Date(time).getTime())) return '-'; // Handle invalid or missing time
+  const date = new Date(time);
+  return date.toLocaleString(); // Convert to a readable format
+}
+
+// Helper function to format duration into HH:MM:SS
+function formatDuration(durationInSeconds) {
+  if (!durationInSeconds || isNaN(durationInSeconds)) return '-'; // Handle missing or invalid durations
+  const hours = Math.floor(durationInSeconds / 3600);
+  const minutes = Math.floor((durationInSeconds % 3600) / 60);
+  const seconds = Math.floor(durationInSeconds % 60);
+
+  return `${padNumber(hours)}:${padNumber(minutes)}:${padNumber(seconds)}`;
+}
+
+// Helper function to pad single digits with leading zeros
+function padNumber(number) {
+  return number < 10 ? `0${number}` : number;
+}
+
+// Minimize the window
+function minimizeWindow() {
+  ipcRenderer.send('minimize-window');
+}
+
+// Close the window
+function closeWindow() {
+  ipcRenderer.send('close-window'); // Send the close event to the main process
+}
+
+// Fetch lab logs periodically (every 5 seconds)
+setInterval(fetchLabLogs, 5000); // Automatic updates
+fetchLabLogs(); // Initial call to fetch data
