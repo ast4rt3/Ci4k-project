@@ -1,70 +1,64 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
+const childProcess = require('child_process');
 
-let win; // Variable for the signup window
-let clientWindow; // Variable for the client window
+let signupWindow;
 
-function createWindow() {
-  // Create the signup window
-  win = new BrowserWindow({
+function createSignupWindow() {
+  signupWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      nodeIntegration: true, // Allow Node.js integration for IPC and other features
+      nodeIntegration: false, // Disable nodeIntegration for security
+      contextIsolation: true, // Enable context isolation
+      preload: path.join(__dirname, 'preload.js'), // Ensure preload is used
     },
   });
 
-  // Load the signup.html file correctly (ensure it's in the same directory or adjust path)
-  win.loadFile(path.join(__dirname, 'signup.html'));
+  signupWindow.loadFile(path.join(__dirname, 'signup.html'));
 
-  // Handle the closed window event to clean up the reference
-  win.on('closed', () => {
-    win = null;
+  signupWindow.on('closed', () => {
+    signupWindow = null;
   });
 }
 
-// Handle 'open-client' event to open the client window after successful signup
-ipcMain.on('open-client', () => {
-  // If a client window already exists, focus on it
-  if (clientWindow) {
-    clientWindow.focus();
-  } else {
-    // Create a new client window if it doesn't exist
-    clientWindow = new BrowserWindow({
-      width: 800,
-      height: 600,
-      webPreferences: {
-        nodeIntegration: true,  // Enable node integration for the new window
-      },
-    });
+// Event to open the client window and run the `npm start` command
+ipcMain.on('open-client', (event) => {
+  // Path to the client directory where the client app resides
+  const clientDir = path.join(__dirname, 'client');
+  
+  console.log(`Starting client app in directory: ${clientDir}`);
 
-    // Correct path to load client.html (ensure the 'client' folder is correctly set)
-    clientWindow.loadFile(path.join(__dirname, 'client', 'client.html'));
 
-    // Handle the closed event of the client window
-    clientWindow.on('closed', () => {
-      clientWindow = null;
-    });
-  }
 
-  // Optionally close the signup window after opening the client window
-  if (win) {
-    win.close(); // Close the signup window after signup is successful
-  }
+  // Wrap the npm start command in double quotes to handle spaces in paths
+  const command = `npm start`;
+
+  // Execute the command to start the client app from the client directory
+  childProcess.exec(command, { cwd: clientDir }, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error starting client app: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`stderr: ${stderr}`);
+      return;
+    }
+    console.log(`stdout: ${stdout}`);
+  });
+
+  // Optional: Delay the closing of the signup window for 5 seconds (or adjust as needed)
+  setTimeout(() => {
+    if (signupWindow) {
+      signupWindow.close();
+    }
+  }, 5000);  // Delay for 5 seconds (5000 milliseconds)
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(createSignupWindow);
 
-// Handle quitting the app when all windows are closed (except on macOS)
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
-  }
-});
-
-// Recreate the window if the app is activated (macOS specific behavior)
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
   }
 });

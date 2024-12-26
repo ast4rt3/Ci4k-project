@@ -90,61 +90,62 @@
     </div>
 
     <script>
-       document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('signup-form');
-            const responseMessage = document.getElementById('response-message');
-            const signupButton = document.getElementById('signup-button');
-
-            form.addEventListener('submit', async (event) => {
-                event.preventDefault();
-
-                // Disable the button and show loading text
-                signupButton.disabled = true;
-                signupButton.textContent = 'Signing Up...';
-
-                const studentID = document.getElementById('studentID').value;
-                const fullName = document.getElementById('fullName').value;
-                const email = document.getElementById('email').value;
-                const department = document.getElementById('department').value;
-
-                const data = { studentID, full_name: fullName, email, department };
-
-                try {
-                    const response = await fetch('http://localhost:3000/signup', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data),
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        responseMessage.textContent = result.message || 'User signed up successfully!';
-                        responseMessage.style.color = 'green';
-
-                        // Trigger the `runNpmStart` logic via IPC
-                        if (window.electronAPI) {
-                            window.electronAPI.runNpmStart();  // Make sure the API is available
-                        }
-
-                        // Wait for the npm start process to be ready before navigating to client.html
-                        window.location.href = 'client/client.html';  // Adjust the path as needed
-                    } else {
-                        throw new Error(result.message || 'Signup failed.');
-                    }
-                } catch (error) {
-                    responseMessage.textContent = error.message || 'Error signing up. Please try again.';
-                    responseMessage.style.color = 'red';
-                } finally {
-                    // Re-enable the button after the process is done
-                    signupButton.disabled = false;
-                    signupButton.textContent = 'Sign Up';
-                }
-            });
+        document.addEventListener('DOMContentLoaded', () => {
+          const form = document.getElementById('signup-form');
+          const responseMessage = document.getElementById('response-message');
+          const signupButton = document.getElementById('signup-button');
+      
+          form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+      
+            signupButton.disabled = true;
+            signupButton.textContent = 'Signing Up...';
+      
+            const studentID = document.getElementById('studentID').value;
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const department = document.getElementById('department').value;
+      
+            if (!studentID || !fullName || !email || !department) {
+              responseMessage.textContent = 'Missing required fields';
+              responseMessage.style.color = 'red';
+              signupButton.disabled = false;
+              signupButton.textContent = 'Sign Up';
+              return;
+            }
+      
+            const data = { studentID, full_name: fullName, email, department };
+      
+            try {
+              const response = await fetch('http://localhost:3000/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+              });
+      
+              const result = await response.text();
+      
+              if (response.ok) {
+                responseMessage.textContent = result || 'User signed up successfully!';
+                responseMessage.style.color = 'green';
+      
+                // Send the 'open-client' event to the main process
+                window.electronAPI.send('open-client');
+              } else {
+                throw new Error(result || 'Signup failed.');
+              }
+            } catch (error) {
+              responseMessage.textContent = error.message || 'Error signing up. Please try again.';
+              responseMessage.style.color = 'red';
+            } finally {
+              signupButton.disabled = false;
+              signupButton.textContent = 'Sign Up';
+            }
+          });
         });
-    </script>
-
+      </script>
+      
+      
+    
 </body>
 </html>
