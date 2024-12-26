@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Expose only the necessary API to the renderer process
+// Expose APIs to the renderer process
 contextBridge.exposeInMainWorld('electronAPI', {
-    runNpmStart: () => ipcRenderer.invoke('run-npm-start') // This will call the 'run-npm-start' handler in main.js
+    runNpmStart: () => ipcRenderer.invoke('run-npm-start'),
+    getUsername: () => ipcRenderer.invoke('get-username') // Add a method to get the username
 });
-

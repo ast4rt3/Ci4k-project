@@ -2,10 +2,11 @@ let ws;  // WebSocket variable
 let startTime;
 let timer;
 let connected = false;
+let reconnectAttempts = 0;  // Track the number of reconnect attempts
 
 // Function to create and manage WebSocket connection
 function connectWebSocket() {
-  ws = new WebSocket('ws:// 192.168.1.9:8080');  // Connect to the WebSocket server
+  ws = new WebSocket('ws://192.168.1.5:8080');  // Connect to the WebSocket server
 
   ws.onopen = () => {
     console.log('Connected to the WebSocket server');
@@ -20,6 +21,9 @@ function connectWebSocket() {
 
     // Notify the server of the new connection
     ws.send(JSON.stringify({ type: 'clientConnect' }));
+
+    // Reset reconnect attempts on successful connection
+    reconnectAttempts = 0;
   };
 
   ws.onerror = (error) => {
@@ -51,8 +55,10 @@ function connectWebSocket() {
     connected = false;
     stopTrackingTime();
 
-    // Try to reconnect after 3 seconds if the connection is lost
-    setTimeout(connectWebSocket, 3000);
+    // Try to reconnect with an increasing delay if the connection is lost
+    reconnectAttempts++;
+    const reconnectDelay = Math.min(3000 * reconnectAttempts, 30000); // Max 30 seconds delay
+    setTimeout(connectWebSocket, reconnectDelay);
   };
 }
 
@@ -147,6 +153,12 @@ window.onload = () => {
     e.preventDefault();
     const clientId = document.getElementById('username').value;
 
+    // Validate clientId
+    if (!clientId.trim()) {
+      document.getElementById('status').textContent = 'Please enter a valid username.';
+      return;
+    }
+
     // Send login request to the server
     if (connected && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({
@@ -159,4 +171,3 @@ window.onload = () => {
     }
   });
 };
-
