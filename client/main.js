@@ -1,145 +1,128 @@
-const { app, BrowserWindow, Tray, Menu, screen } = require('electron');
-const path = require('path');
-const fs = require('fs');
+const { ipcRenderer } = require('electron'); // Import ipcRenderer to communicate with the main process
 
-let tray = null;
-let mainWindow = null;
+let ws;  // WebSocket variable
+let startTime;
+let timer;
+let connected = false;
+let reconnectAttempts = 0;  // Track the number of reconnect attempts
+let studentID;  // Client ID for login
 
-// Get the correct icon path based on development or production
-function getTrayIconPath() {
-    console.log("Checking if app is packaged:", app.isPackaged);
-
-    if (app.isPackaged) {
-        const iconPath = path.join(process.resourcesPath, 'resources', 'egg.ico');
-        if (fs.existsSync(iconPath)) {
-            console.log('Found tray icon at:', iconPath);
-            return iconPath;
-        } else {
-            console.error('Error: Tray icon file does not exist in resources.');
-            return null;
-        }
-    } else {
-        const iconPath = path.join(__dirname, 'egg.ico');
-        console.log('Looking for tray icon in development:', iconPath);
-        if (fs.existsSync(iconPath)) {
-            return iconPath;
-        } else {
-            console.error('Error: Tray icon file does not exist in development.');
-            return null;
-        }
-    }
+// Function to get and display the PC username
+async function getAndDisplayUsername() {
+  try {
+    studentID = await ipcRenderer.invoke('get-pc-username');  // Request the PC username from the main process
+    console.log('PC Username:', studentID);
+    document.getElementById('pcUsername').textContent = `PC: ${studentID}`; // Display the username
+  } catch (error) {
+    console.error('Error retrieving PC username:', error);
+  }
 }
 
-// Get the correct path for the HTML file
-// Get the correct path for the HTML file
-function getHtmlFilePath() {
-    if (app.isPackaged) {
-        // For packaged app, the file is under the 'resources' folder
-        return path.join(process.resourcesPath, 'client', 'client.html');
-    } else {
-        // For development mode, look for the file in the root
-        return path.join(__dirname, 'client.html');
-    }
-}
+// Function to create and manage WebSocket connection
+function connectWebSocket() {
+  const serverAddress = 'ws://localhost:8080';  // Adjust WebSocket URL to server's address
+  ws = new WebSocket(serverAddress);
 
+  ws.onopen = async () => {
+    console.log('Connected to the WebSocket server');
+    document.getElementById('status').textContent = 'Connected successfully!';
+    connected = true;
 
-// Create the main application window
-function createMainWindow() {
-    const htmlPath = getHtmlFilePath();
+    // Notify the server of the new connection
+    ws.send(JSON.stringify({
+      type: 'clientConnect',
+      studentID: studentID,  // Send the PC username as studentID
+      computerNumber: 1,     // or dynamically determine it
+    }));
 
-    if (!fs.existsSync(htmlPath)) {
-        console.error('Error: client.html file does not exist at:', htmlPath);
-        app.quit();
-        return;
-    }
-    console.log('Resolved HTML Path:', htmlPath);
+    // Initialize the start time
+    startTime = Date.now();
+    console.log('Connection opened. Start time set to:', startTime);
 
-    const primaryDisplay = screen.getPrimaryDisplay();
-    const { width, height } = primaryDisplay.workAreaSize;
+    startTrackingTime();
 
-    const windowWidth = 250;
-    const windowHeight = 150;
+    // Reset reconnect attempts on successful connection
+    reconnectAttempts = 0;
+  };
 
-    const xPos = width - windowWidth;
-    const yPos = height - windowHeight;
+  ws.onerror = (error) => {
+    console.error('WebSocket Error:', error);
+    document.getElementById('status').textContent = 'Connection error. Please try again.';
+    connected = false;
+  };
 
-    mainWindow = new BrowserWindow({
-        width: windowWidth,
-        height: windowHeight,
-        x: xPos,
-        y: yPos,
-        webPreferences: {
-            contextIsolation: false,
-            nodeIntegration: true,
-        },
-        resizable: false,
-        alwaysOnTop: true,
-        frame: false,
-        show: false, // Hide initially
-    });
-
-    mainWindow.loadFile(htmlPath);
-
-    mainWindow.once('ready-to-show', () => {
-        console.log('Window ready to show.');
-        mainWindow.show();
-    });
-
-    mainWindow.on('close', (event) => {
-        console.log('Window close attempt.');
-        event.preventDefault();
-        mainWindow.hide(); // Hide the window instead of closing
-    });
-}
-
-// Create the tray icon and menu
-function createTray(trayIconPath) {
+  ws.onmessage = (message) => {
     try {
-        tray = new Tray(trayIconPath);
-        console.log('Tray icon loaded successfully.');
+      const data = JSON.parse(message.data);
+      console.log('Received:', data);
 
-        const trayMenu = Menu.buildFromTemplate([
-            { label: 'Show Window', click: () => mainWindow.show() },
-            { label: 'Hide Window', click: () => mainWindow.hide() },
-            { label: 'Exit', click: () => app.quit() },
-        ]);
-
-        tray.setToolTip('Client Dashboard');
-        tray.setContextMenu(trayMenu);
-    } catch (error) {
-        console.error('Failed to load tray icon:', error);
-        app.quit();
+      if (data.type === 'loginResponse') {
+        handleLoginResponse(data);
+      } else if (data.type === 'timeUpdate') {
+        updateTimeSpent(data.timeSpent);
+      } else if (data.type === 'notification') {
+        showNotification(data.message);
+      }
+    } catch (e) {
+      console.error('Error parsing WebSocket message:', e);
     }
+  };
+
+  ws.onclose = () => {
+    console.log('WebSocket connection closed. Reconnecting...');
+    document.getElementById('status').textContent = 'Disconnected. Reconnecting...';
+    connected = false;
+    stopTrackingTime();
+
+    // Try to reconnect with an increasing delay if the connection is lost
+    reconnectAttempts++;
+    const reconnectDelay = Math.min(3000 * reconnectAttempts, 30000); // Max 30 seconds delay
+    setTimeout(connectWebSocket, reconnectDelay);
+  };
 }
 
-app.on('ready', () => {
-    console.log('App is ready.');
+// Start tracking time and update the UI
+function startTrackingTime() {
+  timer = setInterval(() => {
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+    updateTimeSpent(timeSpent);
+    sendTimeUpdate(timeSpent);
+  }, 1000); // Update every second
+}
 
-    const trayIconPath = getTrayIconPath();
-    if (!trayIconPath) {
-        console.error('Tray icon path is invalid. Exiting app.');
-        app.quit();
-        return;
-    }
+// Send time update to the server
+function sendTimeUpdate(timeSpent) {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      type: 'timeUpdate',
+      studentID: studentID,  // Send student ID along with the time update
+      timeSpent: timeSpent,
+    }));
+  }
+}
 
-    createMainWindow();
-    createTray(trayIconPath);
-});
+// Update the UI with the time spent
+function updateTimeSpent(timeSpent) {
+  document.getElementById('timeSpent').textContent = `Time Spent: ${timeSpent}s`;
+}
 
-app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
-});
+// Stop the time tracking when the user disconnects
+function stopTrackingTime() {
+  clearInterval(timer);
+}
 
-app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createMainWindow();
-    }
-});
+// Handle login response (optional, you can adjust as per your requirements)
+function handleLoginResponse(data) {
+  console.log('Login response received:', data);
+}
 
-process.on('uncaughtException', (err) => {
-    console.error('Unhandled exception:', err);
-    app.quit();
-});
+// Show notifications to the user
+function showNotification(message) {
+  new Notification('Server Message', { body: message });
+}
 
+// Initial call to get the username
+getAndDisplayUsername();
+
+// Connect WebSocket when ready
+connectWebSocket();

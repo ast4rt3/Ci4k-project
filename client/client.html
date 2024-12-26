@@ -15,7 +15,8 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      background-color: rgba(255, 255, 255, 0.9);
+      background-color: rgba(0, 0, 0, 0.5); /* Black background with 50% opacity */
+      color: white; /* White text */
       font-size: 14px;
       text-align: center;
     }
@@ -25,9 +26,32 @@
       margin-bottom: 10px;
     }
 
-    #status, #timeSpent {
+    #status, #timeSpent, #pcUsername {
       font-size: 14px;
       margin-top: 5px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #notification {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      border-radius: 5px;
+      display: none;
     }
   </style>
 </head>
@@ -38,6 +62,14 @@
     <div id="status">Connecting...</div>
     <!-- Time Spent -->
     <div id="timeSpent">Time Spent: 0s</div>
+    <!-- PC Username -->
+    <div id="pcUsername"></div>
+
+    <button id="captureBtn">Capture Screenshot</button>
+
+    
+    <!-- Notification -->
+    <div id="notification">Screenshot captured and sent to the server!</div>
   </div>
 
   <script src="renderer.js"></script>
