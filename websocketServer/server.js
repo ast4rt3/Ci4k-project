@@ -7,7 +7,7 @@ const bodyParser = require('body-parser'); // Import body-parser
 const app = express();
 const port = 3000;
 
-const wss = new WebSocket.Server({ host: '192.168.1.21', port: 8080 });
+const wss = new WebSocket.Server({ host: '192.168.1.9', port: 8080 });
 
 // MySQL database connection
 const db = mysql.createConnection({
@@ -270,4 +270,4 @@ app.post('/signup', (req, res) => {
 process.on('SIGINT', handleShutdown);
 process.on('SIGTERM', handleShutdown);
 
-console.log('WebSocket server running on ws://192.168.1.21:8080');
+console.log('WebSocket server running on ws://192.168.9:8080');

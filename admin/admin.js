@@ -2,7 +2,7 @@ const { ipcRenderer } = require('electron'); // Electron IPC for window controls
 
 // Function to fetch lab logs from the server
 function fetchLabLogs() {
-  fetch('http://192.168.1.21:8080/lab_logs') // Updated API endpoint
+  fetch(' 192.168.1.9:8080/lab_logs') // Updated API endpoint
     .then((response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);

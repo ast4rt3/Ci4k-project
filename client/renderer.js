@@ -5,7 +5,7 @@ let connected = false;
 
 // Function to create and manage WebSocket connection
 function connectWebSocket() {
-  ws = new WebSocket('ws://192.168.1.21:8080');  // Connect to the WebSocket server
+  ws = new WebSocket('ws:// 192.168.1.9:8080');  // Connect to the WebSocket server
 
   ws.onopen = () => {
     console.log('Connected to the WebSocket server');
