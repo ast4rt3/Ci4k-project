@@ -7,7 +7,9 @@ function createWindow() {
   win = new BrowserWindow({
     width: 800,
     height: 600,
-    frame: false, // Disables the default window frame
+    frame: false, // Remove the default window frame
+    resizable: false, // Make the window non-resizable
+    transparent: true, // Make the background of the window transparent
     webPreferences: {
       preload: path.join(__dirname, 'admin.js'), // Corrected path for preload
       nodeIntegration: true, // Enable Node.js integration in renderer process

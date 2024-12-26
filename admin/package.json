@@ -34,5 +34,9 @@
             "target": "nsis",
             "icon": "admin/egg.ico"
         }
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "jspdf": "^2.5.2"
     }
 }
