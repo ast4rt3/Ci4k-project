@@ -2,7 +2,7 @@ const { ipcRenderer } = require('electron');
 const WebSocket = require('ws');
 
 // WebSocket setup
-const ws = new WebSocket('ws://192.168.1.5:8080'); // WebSocket server connection
+const ws = new WebSocket('ws://localhost:8080'); // WebSocket server connection
 
 ws.onopen = () => {
   console.log('Connected to WebSocket server');
@@ -19,12 +19,13 @@ ws.onmessage = (message) => {
     const data = JSON.parse(message.data);
     console.log('Received:', data);
 
-    // Check if the message is related to lab logs update
+    // Handle lab logs update message
     if (data.type === 'labLogsUpdate') {
       updateLabLogsTable(data.data);  // Update the table with new lab logs data
     }
 
     // Handle other WebSocket message types (e.g., client connect/disconnect)
+    // You can extend here with additional types like 'clientConnect', 'clientDisconnect', etc.
     // ...
 
   } catch (e) {
@@ -52,7 +53,7 @@ document.getElementById('purge-button').addEventListener('click', () => {
   }
 });
 
-// Function to update the lab logs table on the admin dashboard
+// Update the lab logs table with new data
 function updateLabLogsTable(logs) {
   const tableBody = document.getElementById('client-table-body');
   if (!tableBody) {
@@ -60,10 +61,10 @@ function updateLabLogsTable(logs) {
     return;
   }
 
-  // Clear existing table rows
+  // Clear existing rows
   tableBody.innerHTML = '';
 
-  // Loop through each log and add a row to the table
+  // Insert new rows into the table
   logs.forEach((log) => {
     const row = document.createElement('tr');
     row.id = `log-${log.id}`;
@@ -85,17 +86,33 @@ function updateLabLogsTable(logs) {
   });
 }
 
-// Format duration (if available) to a readable format (HH:MM:SS)
-function formatDuration(durationInSeconds) {
-  const hours = Math.floor(durationInSeconds / 3600);
-  const minutes = Math.floor((durationInSeconds % 3600) / 60);
-  const seconds = durationInSeconds % 60;
+// Poll the server every 5 seconds to check for updates
+setInterval(fetchLabLogs, 5000);  // Update every 5 seconds
 
-  return `${hours}:${minutes}:${seconds}`;
+// Initially fetch the lab logs
+fetchLabLogs();
+
+// Fetch lab logs from server on page load
+function fetchLabLogs() {
+  fetch('http://localhost:3000/lab_logs')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Failed to fetch lab logs: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      updateLabLogsTable(data); // Update the table with fetched data
+    })
+    .catch(error => {
+      console.error('Error fetching lab logs:', error);
+      alert('Failed to load lab logs.');
+    });
 }
 
+// Export to CSV functionality
 document.getElementById('export-csv').addEventListener('click', () => {
-  fetch('http://localhost:3000/lab-logs')
+  fetch('http://localhost:3000/lab_logs')
     .then(response => {
       console.log('Response status:', response.status);
       if (!response.ok) {
@@ -113,13 +130,9 @@ document.getElementById('export-csv').addEventListener('click', () => {
     });
 });
 
-
-// Call fetchLabLogs when the page is loaded
-fetchLabLogs();
-
-// Export to CSV functionality
+// Convert logs to CSV format
 function convertToCSV(logs) {
-  const headers = ['Client ID', 'PC', 'Connect Time', 'Disconnect Time', 'Duration'];
+  const headers = ['Student ID', 'Computer #', 'Login Time', 'Logout Time', 'Duration'];
   const rows = logs.map(log => [
     log.studentID,
     log.computer_number,
@@ -136,6 +149,7 @@ function convertToCSV(logs) {
   return csvContent;
 }
 
+// Download the CSV file
 function downloadCSV(data) {
   const csvContent = convertToCSV(data);
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -146,3 +160,9 @@ function downloadCSV(data) {
   link.click();
 }
 
+// Format the duration in a readable way
+function formatDuration(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}m ${remainingSeconds}s`;
+}
