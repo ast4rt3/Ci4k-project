@@ -6,13 +6,16 @@ let signupWindow;
 
 function createSignupWindow() {
   signupWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 650,
+    height: 686,
+    resizable: false,
     webPreferences: {
       nodeIntegration: false, // Disable nodeIntegration for security
       contextIsolation: true, // Enable context isolation
       preload: path.join(__dirname, 'preload.js'), // Ensure preload is used
     },
+    autoHideMenuBar: true,  // This hides the menu bar
+    menuBarVisible: false,  // Ensure menu bar is hidden
   });
 
   signupWindow.loadFile(path.join(__dirname, 'signup.html'));
@@ -28,8 +31,6 @@ ipcMain.on('open-client', (event) => {
   const clientDir = path.join(__dirname, 'client');
   
   console.log(`Starting client app in directory: ${clientDir}`);
-
-
 
   // Wrap the npm start command in double quotes to handle spaces in paths
   const command = `npm start`;

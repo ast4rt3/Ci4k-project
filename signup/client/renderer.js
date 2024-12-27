@@ -6,7 +6,7 @@ let reconnectAttempts = 0;  // Track the number of reconnect attempts
 
 // Function to create and manage WebSocket connection
 function connectWebSocket() {
-  ws = new WebSocket('ws://192.168.1.5:8080');  // Connect to the WebSocket server
+  ws = new WebSocket('ws://localhost:8080'); // WebSocket server connection 
 
   ws.onopen = () => {
     console.log('Connected to the WebSocket server');

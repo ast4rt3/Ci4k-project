@@ -1,2 +1,10 @@
 node_modules
 node_modules
+*.json
+*.json
+websocketServer/package-lock.json
+websocketServer/package.json
+signup/client/package.json
+signup/client/package-lock.json
+admin/package.json
+admin/package-lock.json

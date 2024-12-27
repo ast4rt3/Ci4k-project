@@ -10,7 +10,7 @@
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background-color: rgba(0, 0, 0, 0.6); /* Transparent background with slight black tint */
+      background-color: rgba(0, 0, 0); /* Transparent background with slight black tint */
       backdrop-filter: blur(10px); /* Blurring effect for transparency */
       box-shadow: 0 0 15px 10px rgba(0, 255, 0, 0.8); /* Glowing green effect */
       animation: glowing-effect 2s infinite alternate;
@@ -18,15 +18,15 @@
 
     @keyframes glowing-effect {
       0% {
-        box-shadow: 0 0 15px 10px rgba(0, 255, 0, 0.8);
+        box-shadow: 0 0 15px 10px rgba(133, 255, 133, 0.8);
       }
       100% {
-        box-shadow: 0 0 25px 15px rgba(0, 255, 0, 1);
+        box-shadow: 0 0 25px 15px rgb(0, 144, 0);
       }
     }
 
     #header {
-      background-color: #6fff00;
+      background-color: #204900;
       padding: 10px;
       display: flex;
       justify-content: space-between;
@@ -95,25 +95,50 @@
     #content.minimized {
       display: none;
     }
+
+    .skibidi{
+      display: flex;
+  flex-direction: row; /* Stacks elements vertically */
+  align-items: center; /* Centers elements horizontally */
+  justify-content: flex-start;  /* Centers elements vertically */
+  gap: 15px; /* Adds space between the elements */
+  margin-top: 20px; /* Adds space above the section */
+  padding: 10px;
+    }
+
+    .ngan{
+  background-color: white; 
+  color: black;
+  padding: 10px; 
+  border-radius: 8px; 
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+  margin-top: 10px; 
+    }
   </style>
 </head>
 <body >
   <div id="header">
-    <h1>Admin Dashboard</h1>
+    <h1 style="color: white;">Admin Dashboard</h1>
     <div id="button">
       <button class="button-29" onclick="minimizeWindow()">-</button>
-      <button class="button-29" style="  background-image: radial-gradient(100% 100% at 100% 0, hsl(123, 100%, 51%) 0, #ff5454 100%);
+      <button class="button-29" style="  background-image: radial-gradient(100% 100% at 100% 0, hsl(0, 100%, 50%) 0, #bc0000 100%);
       border: 0;
       border-radius: 6px;
       box-shadow: rgba(45, 35, 66, .4) 0 2px 4px,rgba(45, 35, 66, .3) 0 7px 13px -3px,rgba(58, 65, 111, .5) 0 -3px 0 inset;" onclick="closeWindow()">x</button>
     </div>
   </div>
 
+<br>
+
   <div id="content">
     <div id="notification">Notifications will appear here.</div>
-    <button class="button-49" role="button" id="purge-button">Purge Data</button>
-    <button class="button-49" role="button" style="margin-left: 10px;" id="export-csv">Print Data</button>
-    <h1 class="ngan">Made by:<br> Lawrence Heras &<br>Ivan Abarquez</h1>
+  <div class="skibidi">
+       
+         <button class="button-30" role="button" id="purge-button">Delete Data</button>
+         <button class="button-30" role="button" style="margin-left: 10px;" id="export-csv">Save Data</button>
+       
+    
+  </div>
     <table style="background-color: greenyellow;">
       <thead>
         <tr>

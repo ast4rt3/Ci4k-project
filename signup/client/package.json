@@ -36,5 +36,8 @@
       "target": "nsis",
       "icon": "client/egg.ico"
     }
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
   }
 }
