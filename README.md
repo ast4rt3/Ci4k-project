@@ -1,5 +1,7 @@
 -Extract the files if they are in a compressed format.
+
 -Open your terminal or command prompt.
+
 -Use the cd command to navigate to the project folder:
 
 	cd <project-folder>
