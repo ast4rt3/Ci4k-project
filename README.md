@@ -5,6 +5,7 @@
 	cd <project-folder>
 
 Run the following command to install all required packages:
+
 	all directory(admin,client,server)/admin direcotry
 	npm install
  	npm install -g electron
